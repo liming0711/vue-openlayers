@@ -4,7 +4,7 @@ OpenLayers 初始化一幅地图（`map`），至少需要一个可视区域（`
 
 ## Layer 类（ol.layer）
 
-在 OpenLayers 中，图层是使用 layer 对象表示的，主要有热度图层（`heatmaplayer`）、图片图层（`imagelayer`）、切片图层（`tilelayer`）和矢量图层（`vectorlayer`）四种类型，它们都是继承 `Layer` 类的，`Layer` 类（`[ol.layer](https://github.com/openlayers/openlayers/blob/master/src/ol/layer/Layer.js)`）的描述如下：
+在 OpenLayers 中，图层是使用 layer 对象表示的，主要有热度图层（`heatmaplayer`）、图片图层（`imagelayer`）、切片图层（`tilelayer`）和矢量图层（`vectorlayer`）四种类型，它们都是继承 `Layer` 类的，`Layer` 类（[`ol.layer`](https://github.com/openlayers/openlayers/blob/master/src/ol/layer/Layer.js)）的描述如下：
 
 > 抽象基类，通常只用于创建子类而不在应用程序中实例化
 > 栅格或矢量地图数据的可视化表示
@@ -19,13 +19,13 @@ OpenLayers 初始化一幅地图（`map`），至少需要一个可视区域（`
 ### Layer options
 | Name           | Type                         | Description       |
 | :--------:     | :-----:                      | :----:                 |
-| opacity        | number | undefined           | 透明度，0 到 1 之间，默认是 1 |
-| source         | ol.source.Source | undefined | 这个层的源（`source`），如果没有提供构造函数，在初始化之后源（`source`）可以通过调用 `layer.setSource(source)` 来设置 |
-| visible        | boolean | undefined          | 能见度，默认是 true（visible） |
-| extend         | ol.Extent | undefined        | layer 渲染的边界范围，layer 将不会在此范围之外渲染 |
-| zIndex         | number | undefined           | layer 渲染时的 `z-index`。在渲染时，layers 首先通过 `z-index`，然后通过 `position` 被整理排序。默认是 0 |
-| minResolution  | number | undefined           | 最小分辨率（含） |
-| maxResolution  | number | undefined           | 最大分辨率（不含） |
+| opacity        | number, undefined           | 透明度，0 到 1 之间，默认是 1 |
+| source         | ol.source.Source, undefined | 这个层的源（`source`），如果没有提供构造函数，在初始化之后源（`source`）可以通过调用 `layer.setSource(source)` 来设置 |
+| visible        | boolean, undefined          | 能见度，默认是 true（visible） |
+| extend         | ol.Extent, undefined        | layer 渲染的边界范围，layer 将不会在此范围之外渲染 |
+| zIndex         | number, undefined           | layer 渲染时的 `z-index`。在渲染时，layers 首先通过 `z-index`，然后通过 `position` 被整理排序。默认是 0 |
+| minResolution  | number, undefined           | 最小分辨率（含） |
+| maxResolution  | number, undefined           | 最大分辨率（不含） |
 
 ## Source（ol.source）
 
