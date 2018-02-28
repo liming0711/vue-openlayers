@@ -9,7 +9,7 @@
 import ol from 'openlayers';
 import debounce from 'throttle-debounce/debounce';
 
-import mapTools from './mixins/mapTools';
+import feature from './mixins/feature';
 
 import broadcast from './utils/broadcast';
 
@@ -17,7 +17,7 @@ const DEBOUNCE_TIME = 400;
 
 export default {
   name: 'OlMap',
-  mixins: [mapTools],
+  mixins: [feature],
   props: {
     center: {
       type: Array,
@@ -48,11 +48,6 @@ export default {
     },
     source: Object,
     layers: Array,
-    // 画多边形时的边数，其中
-    // 1为点、2为线、-1为圆、-2为椭圆、-3为不规则多边形，
-    // 大于2时为对应边数的规则多边形，0为无效值
-    // 如果需要指定多边形的样式，需使用 Object（包括边数）
-    drawProperties: [Number, Object],
     // 当 hover 到某个 feature 上的时候忽略地图的 hover 事件，Image 除外
     ignoreFeatureHover: {
       type: Boolean,
@@ -104,8 +99,8 @@ export default {
       ol: null,
       map: null,
       tileLayer: null,
-      // draw interaction 为可活动状态时 drawEnable 为 true，否则为 false
-      // drawEnable 为 true 时不再监听所有的 click 事件
+      // draw interaction 为活动状态时 drawEnable 为 true，否则为 false
+      // drawEnable 为 true 时不再监听所有的 click 和 hover 事件
       drawEnable: false,
       sourceInstance: null,
       click: null,
@@ -196,17 +191,26 @@ export default {
       this.$emit('ready');
     },
     _initMapEvent () {
-      // click、singleclick、dblclick 被全局 click 事件代替
-      // 因为全局 hover 和 click 事件默认获取了 feature，如果监听 map 的 click、singleclick 和 dblclick，还需要再去处理 feature 的问题
       let view = this.map.getView();
 
+      ['click', 'singleclick', 'dblclick'].forEach(eventName => {
+        this.map.on(eventName, (event) => {
+          if (!(this.ignoreFeatureClick && this._getFeatureAtPixel(event.pixel)) && !this.drawEnable) {
+            this.$emit(eventName, event);
+          }
+        });
+      });
+      this.map.on('pointermove', (event) => {
+        if (!(this.ignoreFeatureHover && this._getFeatureAtPixel(event.pixel)) && !this.drawEnable) {
+          this.$emit('pointermove', event);
+        }
+      });
+      this.map.on('pointerdrag', (event) => { this.$emit('pointerdrag', event); });
+      this.map.on('moveend', (event) => { this.$emit('moveend', event); });
       this.map.on('change:layerGroup', debounce(DEBOUNCE_TIME, (event) => { this.$emit('layerGroupChange', event); })); // TODO if debounce is necessary
       this.map.on('change:size', debounce(DEBOUNCE_TIME, (event) => { this.$emit('sizeChange', event); })); // TODO if debounce is necessary
       this.map.on('change:target', debounce(DEBOUNCE_TIME, (event) => { this.$emit('targetChange', event); })); // TODO if debounce is necessary
       this.map.on('change:view', debounce(DEBOUNCE_TIME, (event) => { this.$emit('viewChange', event); })); // TODO if debounce is necessary
-      this.map.on('moveend', (event) => { this.$emit('moveend', event); });
-      this.map.on('pointerdrag', (event) => { this.$emit('pointerdrag', event); });
-      this.map.on('pointermove', (event) => { this.$emit('pointermove', event); });
       view.on('change:resolution', debounce(DEBOUNCE_TIME, (event) => { this.$emit('zoomChange', event); }));
       view.on('change:center', debounce(DEBOUNCE_TIME, (event) => { this.$emit('centerChange', event); }));
       view.on('change:rotation', debounce(DEBOUNCE_TIME, (event) => { this.$emit('rotationChange', event); }));
@@ -214,6 +218,13 @@ export default {
     _initInteractions () {
       this._addClickInteraction();
       this._addHoverInteraction();
+    },
+    _getFeatureAtPixel (pixel) {
+      if (!pixel) { return false; }
+      let hasFeature = this.map.forEachFeatureAtPixel(pixel, (feature, layer) => {
+        return feature;
+      });
+      return hasFeature;
     },
     _broadcast (layerId, eventName, params) {
       broadcast.call(this, layerId, eventName, params);
@@ -262,6 +273,9 @@ export default {
       }
       return lonlat;
     }
+  },
+  beforeDestroy () {
+    this.map = this.ol = null;
   }
 };
 </script>

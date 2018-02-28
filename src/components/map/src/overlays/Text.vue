@@ -1,13 +1,14 @@
 <script>
 import { createTextStyle } from '../utils/style';
 import common from '../mixins/common';
-// import getSingleFeature from '../mixins/getSingleFeature';
-import mapTools from '../mixins/mapTools';
+import render from '../mixins/render';
+import reload from '../mixins/reload';
+import point from '../mixins/point';
 
 export default {
   name: 'OlText',
   render () { return false; },
-  mixins: [common, mapTools],
+  mixins: [common, render, point, reload],
   props: {
     vid: {
       type: String,
@@ -59,18 +60,6 @@ export default {
     }
   },
   methods: {
-    load () {
-      if (!this.data.length) { return false; }
-      this.layer = new this.ol.layer.Vector({
-        id: this.vid,
-        name: this.name,
-        type: 'point',
-        source: this._getSource(this._getFeatures()),
-        style: feature => { return this._getSingleFeature(feature).getStyle(); },
-        zIndex: this.zIndex
-      });
-      this.$parent.map.addLayer(this.layer);
-    },
     _getStyle (val) {
       let style = createTextStyle(this.ol, {
         text: val.text || '',
@@ -80,34 +69,6 @@ export default {
         align: this.align
       });
       return new this.ol.style.Style(style);
-    },
-    _getFeatures () {
-      let feature;
-      let features = [];
-
-      this.data.forEach(val => {
-        feature = new this.ol.Feature(new this.ol.geom.Point([+val.lon, +val.lat]).transform('EPSG:4326', 'EPSG:3857'));
-        feature.set('attr', val);
-        feature.set('vid', this.vid);
-        feature.setStyle(this._getStyle(val));
-        features.push(feature);
-      });
-
-      return features;
-    },
-    _getSource (features) {
-      let source;
-      if (this.cluster) {
-        source = new this.ol.source.Cluster({
-          distance: this.distance || 50,
-          source: new this.ol.source.Vector({
-            features: features
-          })
-        });
-      } else {
-        source = new this.ol.source.Vector({features: features});
-      }
-      return source;
     }
   }
 };

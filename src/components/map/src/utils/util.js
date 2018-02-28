@@ -12,6 +12,6 @@ export const isEmptyObject = function (obj) {
   return true;
 };
 
-export const getType = data => {
+export const getDataType = data => {
   return class2type[toString.call(data)];
 };

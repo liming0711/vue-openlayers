@@ -1,6 +1,6 @@
 <script>
 import common from '../mixins/common';
-import mapTools from '../mixins/mapTools';
+import render from '../mixins/render';
 
 const WIDTH = 3;
 const MAX_POINT = Infinity;
@@ -9,7 +9,7 @@ const TYPE_LIST = ['Rectangle', 'Square', 'Circle', 'Ellipse', 'Point', 'LineStr
 export default {
   name: 'OlDraw',
   render () { return false; },
-  mixins: [common, mapTools],
+  mixins: [common, render],
   props: {
     vid: {
       type: String,
@@ -32,6 +32,7 @@ export default {
   },
   data () {
     return {
+      drawInteraction: null,
       layer: null,
       active: false,
       lastType: ''
@@ -64,9 +65,7 @@ export default {
   },
   methods: {
     load () {
-      let drawLayer = this.getLayerByParam('id', this.vid);
-
-      if (drawLayer) {
+      if (this.drawInteraction) {
         this.map.removeInteraction(this.drawInteraction);
         this._addInteraction();
         return false;
@@ -76,21 +75,11 @@ export default {
         }
       }
 
-      this.layer = new this.ol.layer.Vector({
-        id: this.vid,
-        name: this.name,
-        type: 'draw',
-        source: new this.ol.source.Vector({
-          crossOrigin: 'anonymous'
-        }),
-        style: feature => { return this._getSingleFeature(feature).getStyle(); },
-        zIndex: this.zIndex
-      });
-      this.map.addLayer(this.layer);
+      this.render('draw', new this.ol.source.Vector({ crossOrigin: 'anonymous' }));
 
       this._addInteraction();
     },
-    _getType () {
+    _getInteractionType () {
       let type = this.type;
       if (this.type === 'Square' || this.type === 'Rectangle') {
         type = 'Circle';
@@ -140,7 +129,7 @@ export default {
     _addInteraction () {
       this.drawInteraction = new this.ol.interaction.Draw({
         source: this.layer.getSource(),
-        type: this._getType(),
+        type: this._getInteractionType(),
         geometryFunction: this._getGeometryFunction(),
         maxPoints: this.type === 'Square' || this.type === 'Rectangle' ? 2 : MAX_POINT
       });

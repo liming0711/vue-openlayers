@@ -1,12 +1,14 @@
 <script>
 import { createMarkerStyle } from '../utils/style';
 import common from '../mixins/common';
-import mapTools from '../mixins/mapTools';
+import render from '../mixins/render';
+import reload from '../mixins/reload';
+import point from '../mixins/point';
 
 export default {
   name: 'OlMarker',
   render () { return false; },
-  mixins: [common, mapTools],
+  mixins: [common, render, point, reload],
   props: {
     vid: {
       type: String,
@@ -81,18 +83,6 @@ export default {
     }
   },
   methods: {
-    load () {
-      if (!this.data.length) { return false; }
-      this.layer = new this.ol.layer.Vector({
-        id: this.vid,
-        name: this.name,
-        type: 'point',
-        source: this._getSource(this._getFeatures()),
-        style: feature => { return this._getSingleFeature(feature).getStyle(); },
-        zIndex: this.zIndex
-      });
-      this.map.addLayer(this.layer);
-    },
     _getStyle (val) {
       let style = createMarkerStyle(this.ol, {
         src: val.bgImg || this.bgImg,
@@ -107,35 +97,6 @@ export default {
         scale: val.scale || this.scale
       });
       return new this.ol.style.Style(style);
-    },
-    _getFeatures () {
-      let feature;
-      let features = [];
-
-      this.data.forEach(val => {
-        feature = new this.ol.Feature(new this.ol.geom.Point([+val.lon, +val.lat]).transform('EPSG:4326', 'EPSG:3857'));
-        feature.attr = val;
-        feature.set('attr', val);
-        feature.set('vid', this.vid);
-        feature.setStyle(this._getStyle(val));
-        features.push(feature);
-      });
-
-      return features;
-    },
-    _getSource (features) {
-      let source;
-      if (this.cluster) {
-        source = new this.ol.source.Cluster({
-          distance: this.distance || 50,
-          source: new this.ol.source.Vector({
-            features: features
-          })
-        });
-      } else {
-        source = new this.ol.source.Vector({features: features});
-      }
-      return source;
     }
   }
 };

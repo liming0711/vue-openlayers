@@ -1,12 +1,14 @@
 <script>
 import { createVectorStyle } from '../utils/style';
-import common from '../mixins/common';
 import { isEmptyObject } from '../utils/util';
+import common from '../mixins/common';
+import render from '../mixins/render';
+import reload from '../mixins/reload';
 
 export default {
   name: 'OlVector',
   render () { return false; },
-  mixins: [common],
+  mixins: [common, render, reload],
   props: {
     name: {
       type: String,
@@ -78,20 +80,16 @@ export default {
     // TODO 兼容其他投影，现在只支持 3857
     load () {
       if (isEmptyObject(this.data)) { return false; }
-      this.layer = new this.ol.layer.Vector({
-        id: this.vid,
-        name: this.name,
-        type: 'vector',
-        source: this._getSource(this._getFeatures()),
-        style: feature => { return this._getStyle(feature); },
-        zIndex: this.zIndex
-      });
-      this.$parent.map.addLayer(this.layer);
+      this.render('vector', this._getSource(this._getFeatures()));
     },
     _getFeatures () {
       let features = new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.data);
-      features.attr = this.data;
-      features.vid = this.vid;
+      features.forEach(feature => {
+        feature.attr = this.data;
+        feature.set('attr', this.data);
+        feature.set('vid', this.vid);
+        feature.setStyle(this._getStyle(feature));
+      });
       return features;
     },
     _getSource (features) {
