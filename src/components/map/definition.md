@@ -13,6 +13,7 @@ openlayers 初始化一幅地图（`map`），至少需要一个可视区域（`
 - layers 通常使用 [`ol.Map#addLayer`](http://openlayers.org/en/latest/apidoc/ol.Map.html#addLayer) 方法添加到地图上，
   类似于 [`ol.interaction.Select`](http://openlayers.org/en/latest/apidoc/ol.interaction.Select.html) 一样的组件在内部使用非托管层，
   这些非托管层使用 [`ol.layer.Layer#setMap`](http://openlayers.org/en/latest/apidoc/ol.layer.Layer.html#setMap) 与地图联系
+  >  map.forEachFeatureAtPixel will always return features from the unmanaged layers.
 
 - 当源（`source`）的状态发生变化时，将触发一个通用的 `change` 事件
 

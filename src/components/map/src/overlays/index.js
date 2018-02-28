@@ -4,5 +4,6 @@ import OlMarker from './Marker';
 import OlOverlay from './Overlay';
 import OlText from './Text';
 import OlVector from './Vector';
+import OlDraw from './Draw';
 
-export default { OlImage, OlLine, OlMarker, OlOverlay, OlText, OlVector };
+export default { OlImage, OlLine, OlMarker, OlOverlay, OlText, OlVector, OlDraw };

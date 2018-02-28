@@ -5,7 +5,7 @@ import common from '../mixins/common';
 
 export default {
   name: 'OlImage',
-  mixins: [common()],
+  mixins: [common],
   props: {
     vid: {
       type: String,
@@ -57,7 +57,7 @@ export default {
     }
   },
   methods: {
-    render () {
+    load () {
       console.log('in image vue', this.imgURL);
 
       let imageLayer = this.getLayerByParam('id', this.vid);

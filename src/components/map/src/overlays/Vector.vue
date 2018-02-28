@@ -1,11 +1,12 @@
 <script>
 import { createVectorStyle } from '../utils/style';
 import common from '../mixins/common';
+import { isEmptyObject } from '../utils/util';
 
 export default {
   name: 'OlVector',
   render () { return false; },
-  mixins: [common()],
+  mixins: [common],
   props: {
     name: {
       type: String,
@@ -15,7 +16,7 @@ export default {
       type: String,
       required: true
     },
-    vector: {
+    data: {
       type: Object,
       required: true
     },
@@ -55,82 +56,61 @@ export default {
         return [0, 0];
       }
     },
-    clicking: {
-      type: Boolean,
-      default: false
+    noDataMode: {
+      type: String,
+      default: 'clean',
+      validator: function (value) {
+        return ['clean', 'keep'].indexOf(value) > -1;
+      }
     },
-    hovering: {
-      type: Boolean,
-      default: false
-    },
-    stopEvent: {
-      type: Boolean,
-      default: true
+    zIndex: {
+      type: Number,
+      default: 2
     },
     massClear: {
       type: Boolean,
       default: true
     }
   },
-  watch: {
-    vector () {
-      this.load();
-    }
-  },
   methods: {
-    // TODO 兼容更多的情况，例如 point 的位置使用 marker
     // TODO 使用 smooth 使曲线平滑
     // TODO 矢量图里的文字可能有多种颜色（e.g：高压是蓝色，低压是红色）
     // TODO 兼容其他投影，现在只支持 3857
-    render () {
-      console.log('in vector vue', this.vector);
-      let vectorLayer = this.getLayerByParam('id', this.vid);
+    load () {
+      if (isEmptyObject(this.data)) { return false; }
+      this.layer = new this.ol.layer.Vector({
+        id: this.vid,
+        name: this.name,
+        type: 'vector',
+        source: this._getSource(this._getFeatures()),
+        style: feature => { return this._getStyle(feature); },
+        zIndex: this.zIndex
+      });
+      this.$parent.map.addLayer(this.layer);
+    },
+    _getFeatures () {
+      let features = new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.data);
+      features.attr = this.data;
+      features.vid = this.vid;
+      return features;
+    },
+    _getSource (features) {
+      return new this.ol.source.Vector({features: features});
+    },
+    _getStyle (feature) {
+      let style = createVectorStyle(this.ol, {
+        strokeColor: feature.getProperties().color || this.strokeColor,
+        strokeWidth: this.strokeWidth,
+        fillColor: feature.getProperties().color || this.fillColor,
+        text: (feature.getProperties().val || this.text) + '',
+        textColor: this.textColor,
+        textStroke: this.textStroke,
+        align: this.align,
+        offsetX: this.offset ? this.offset[0] : 0,
+        offsetY: this.offset ? this.offset[1] : 0
+      });
 
-      if (JSON.stringify(this.vector).length === 2 || !this.vector.features.length) {
-        vectorLayer && this.map.removeLayer(vectorLayer);
-        return false;
-      }
-      if (vectorLayer) {
-        let layerSource = new this.ol.source.Vector({
-          features: new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.vector)
-        });
-
-        vectorLayer.setSource(layerSource);
-      } else {
-        this.layer = new this.ol.layer.Vector({
-          id: this.vid,
-          name: this.name,
-          type: 'vector',
-          source: new this.ol.source.Vector({
-            features: new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.vector)
-          }),
-          style: feature => {
-            let type = feature.getGeometry().getType();
-            let lineColor = type === 'LineString' ? feature.getProperties().color : this.strokeColor;
-            let fillColor = type === 'Polygon' ? feature.getProperties().color : this.fillColor;
-            let text = type === 'Point' ? feature.getProperties().val : this.text;
-            feature.attr = this.vector;
-            feature.id = this.vid;
-            feature.clicking = this.clicking;
-            feature.hovering = this.hovering;
-            feature.stopEvent = this.stopEvent;
-            feature.style = createVectorStyle(this.ol, {
-              strokeColor: lineColor || this.lineColor,
-              strokeWidth: this.strokeWidth,
-              fillColor: fillColor || this.fillColor,
-              text: text ? `${text}` : this.text,
-              textColor: this.textColor,
-              textStroke: this.textStroke,
-              align: this.align,
-              offsetX: this.offset ? this.offset[0] : 0,
-              offsetY: this.offset ? this.offset[1] : 0
-            });
-            return new this.ol.style.Style(feature.style);
-          },
-          zIndex: this.zIndex
-        });
-        this.$parent.map.addLayer(this.layer);
-      }
+      return new this.ol.style.Style(style);
     }
   }
 };

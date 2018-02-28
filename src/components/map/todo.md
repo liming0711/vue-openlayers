@@ -1,0 +1,1 @@
+- overlays 中的重复代码太多，需要整合，比如：text 和 marker 都属于 point 类型、每一个 setSource 的方法

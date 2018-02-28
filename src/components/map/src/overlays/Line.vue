@@ -6,7 +6,7 @@ export default {
   // TODO 增加支持描边
   name: 'OlLine',
   render () { return false; },
-  mixins: [common()],
+  mixins: [common],
   props: {
     name: {
       type: String,
@@ -61,7 +61,7 @@ export default {
     }
   },
   methods: {
-    render () {
+    load () {
       // TODO 增加 setSource 方法
       console.log('in MultiLine vue');
       let multiLineLayer = this.getLayerByParam('id', this.vid);

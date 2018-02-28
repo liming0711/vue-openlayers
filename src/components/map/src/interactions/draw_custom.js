@@ -17,7 +17,7 @@ import ol from 'openlayers';
  * @param {ol.events.ConditionType | undefined} squareCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw square features.
  * @param {ol.events.ConditionType | undefined} centerCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw centered features.
  * @param {bool} canRotate Allow rotation when centered + square, default: true
- * @param {number} clickTolerance click tolerance on touch devices, default: 6
+ * @param {number} clickTolerance click tolerance on touch devices, default: 36
  * @param {number} maxCircleCoordinates Maximum number of point on a circle, default: 100
  */
 var DrawRegularInteraction = function (options = {}) {
@@ -29,11 +29,11 @@ var DrawRegularInteraction = function (options = {}) {
   // List of layers to transform
   this.source_ = options.source;
   // Square condition
-  this.squareFn_ = options.squareCondition;
+  this.square_ = options.square || true;
   // Centered condition
-  this.centeredFn_ = options.centerCondition;
+  this.centered_ = options.center || true;
   // Allow rotation when centered + square
-  this.canRotate_ = (options.canRotate !== false);
+  this.canRotate_ = options.canRotate;
 
   // Number of sides (default=0: circle)
   this.setSides(options.sides);
@@ -42,7 +42,7 @@ var DrawRegularInteraction = function (options = {}) {
   var white = [255, 255, 255, 1];
   var blue = [0, 153, 255, 1];
   var width = 3;
-  var defaultStyle = [
+  this.defaultStyle = [
     new ol.style.Style({
       stroke: new ol.style.Stroke({ color: white, width: width + 2 })
     }),
@@ -68,7 +68,7 @@ var DrawRegularInteraction = function (options = {}) {
     }),
     name: 'DrawRegular overlay',
     displayInLayerSwitcher: false,
-    style: options.style || defaultStyle
+    style: options.style || this.defaultStyle
   });
 
   ol.interaction.Interaction.call(this, {
@@ -121,8 +121,9 @@ DrawRegularInteraction.prototype.reset = function () {
  * @api stable
  */
 DrawRegularInteraction.prototype.setSides = function (nb) {
-  nb = parseInt(nb);
-  this.sides_ = nb > 2 ? nb : 0;
+  // nb = parseInt(nb);
+  // this.sides_ = nb > 2 ? nb : 0;
+  this.sides_ = parseInt(nb);
 };
 
 DrawRegularInteraction.prototype.setSource = function (source) {
@@ -130,7 +131,19 @@ DrawRegularInteraction.prototype.setSource = function (source) {
 };
 
 DrawRegularInteraction.prototype.setStyle = function (style) {
-  this.overlayLayer_.setStyle(style);
+  this.overlayLayer_.setStyle(style || this.defaultStyle);
+};
+
+DrawRegularInteraction.prototype.setSquare = function (b) {
+  this.square_ = b;
+};
+
+DrawRegularInteraction.prototype.setCenter = function (b) {
+  this.centered_ = b;
+};
+
+DrawRegularInteraction.prototype.setRotate = function (b) {
+  this.canRotate_ = b;
 };
 
 /** Default start angle array for each sides
@@ -156,9 +169,9 @@ DrawRegularInteraction.prototype.getGeometry_ = function () {
   var circle;
   var centerPx;
   var dmax;
-  if (this.coord_) {
+  if (this.coordinate_) {
     var center = this.center_;
-    var coord = this.coord_;
+    var coord = this.coordinate_;
 
     // Special case: circle
     if (!this.sides_ && this.square_ && !this.centered_) {
@@ -190,15 +203,32 @@ DrawRegularInteraction.prototype.getGeometry_ = function () {
           a = this.startAngle[this.sides_] || this.startAngle['default'];
         }
 
-        if (this.sides_) {
-          g = ol.geom.Polygon.fromCircle(circle, this.sides_, a);
-        } else {
-          // Optimize points on the circle
-          centerPx = this.getMap().getPixelFromCoordinate(this.center_);
-          dmax = Math.max(100, Math.abs(centerPx[0] - this.coordPx_[0]), Math.abs(centerPx[1] - this.coordPx_[1]));
-          dmax = Math.min(this.maxCircleCoordinates_, Math.round(dmax / (this.centered_ ? 3 : 5)));
-          g = ol.geom.Polygon.fromCircle(circle, dmax, 0);
+        switch (this.sides_) {
+          case 2:
+            return new ol.geom.LineString([this.center_, this.center_]);
+          case -1:
+            // Optimize points on the circle
+            centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+            dmax = Math.max(100, Math.abs(centerPx[0] - this.coordPx_[0]), Math.abs(centerPx[1] - this.coordPx_[1]));
+            dmax = Math.min(this.maxCircleCoordinates_, Math.round(dmax / (this.centered_ ? 3 : 5)));
+            g = ol.geom.Polygon.fromCircle(circle, dmax, 0);
+            break;
+          case -2:
+            // TODO polygon
+            break;
+          default:
+            g = ol.geom.Polygon.fromCircle(circle, this.sides_, a);
+            break;
         }
+        // if (this.sides_) {
+        //   g = ol.geom.Polygon.fromCircle(circle, this.sides_, a);
+        // } else {
+        //   // Optimize points on the circle
+        //   centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+        //   dmax = Math.max(100, Math.abs(centerPx[0] - this.coordPx_[0]), Math.abs(centerPx[1] - this.coordPx_[1]));
+        //   dmax = Math.min(this.maxCircleCoordinates_, Math.round(dmax / (this.centered_ ? 3 : 5)));
+        //   g = ol.geom.Polygon.fromCircle(circle, dmax, 0);
+        // }
 
         if (hasRotation) { return g; }
         // Scale polygon to fit extent
@@ -206,7 +236,7 @@ DrawRegularInteraction.prototype.getGeometry_ = function () {
         if (!this.centered_) {
           center = this.center_;
         } else {
-          center = [ 2 * this.center_[0] - this.coord_[0], 2 * this.center_[1] - this.coord_[1] ];
+          center = [2 * this.center_[0] - this.coordinate_[0], 2 * this.center_[1] - this.coordinate_[1]];
         }
         var scx = (center[0] - coord[0]) / (ext[0] - ext[2]);
         var scy = (center[1] - coord[1]) / (ext[1] - ext[3]);
@@ -215,7 +245,7 @@ DrawRegularInteraction.prototype.getGeometry_ = function () {
           scx = Math.sign(scx) * sc;
           scy = Math.sign(scy) * sc;
         }
-        var t = [ center[0] - ext[0] * scx, center[1] - ext[1] * scy ];
+        var t = [center[0] - ext[0] * scx, center[1] - ext[1] * scy];
 
         g.applyTransform(function (g1, g2, dim) {
           for (let i = 0; i < g1.length; i += dim) {
@@ -239,15 +269,13 @@ DrawRegularInteraction.prototype.getGeometry_ = function () {
 DrawRegularInteraction.prototype.drawSketch_ = function (evt) {
   this.overlayLayer_.getSource().clear();
   if (evt) {
-    this.square_ = this.squareFn_ ? this.squareFn_(evt) : evt.originalEvent.shiftKey;
-    this.centered_ = this.centeredFn_ ? this.centeredFn_(evt) : evt.originalEvent.metaKey || evt.originalEvent.ctrlKey;
     var g = this.getGeometry_();
     if (g) {
       var f = this.feature_;
       f.setGeometry(g);
       this.overlayLayer_.getSource().addFeature(f);
-      if (this.coord_ && this.square_ && ((this.canRotate_ && this.centered_ && this.coord_) || (!this.sides_ && !this.centered_))) {
-        this.overlayLayer_.getSource().addFeature(new ol.Feature(new ol.geom.LineString([this.center_, this.coord_])));
+      if (this.coordinate_ && this.square_ && ((this.canRotate_ && this.centered_ && this.coordinate_) || (!this.sides_ && !this.centered_))) {
+        this.overlayLayer_.getSource().addFeature(new ol.Feature(new ol.geom.LineString([this.center_, this.coordinate_])));
       }
       return f;
     }
@@ -275,23 +303,27 @@ DrawRegularInteraction.prototype.handleEvent_ = function (evt) {
       this.start_(evt);
       break;
     case 'pointerup':
-      // Started and fisrt move
-      if (this.started_ && this.coord_) {
-        dx = this.downPx_[0] - evt.pixel[0];
-        dy = this.downPx_[1] - evt.pixel[1];
-        if (dx * dx + dy * dy <= this.squaredClickTolerance_) {
-          // The pointer has moved
-          if (this.lastEvent === 'pointermove') {
-            this.end_(evt);
-          } else {
-            // On touch device there is no move event : terminate = click on the same point
-            dx = this.upPx_[0] - evt.pixel[0];
-            dy = this.upPx_[1] - evt.pixel[1];
-            if (dx * dx + dy * dy <= this.squaredClickTolerance_) {
+      if (this.sides_ === 1) {
+        this.end_(evt);
+      } else {
+        // Started and fisrt move
+        if (this.started_ && this.coordinate_) {
+          dx = this.downPx_[0] - evt.pixel[0];
+          dy = this.downPx_[1] - evt.pixel[1];
+          if (dx * dx + dy * dy <= this.squaredClickTolerance_) {
+            // The pointer has moved
+            if (this.lastEvent === 'pointermove') {
               this.end_(evt);
             } else {
-              this.handleMoveEvent_(evt);
-              this.drawPoint_(evt.coordinate, true);
+              // On touch device there is no move event : terminate = click on the same point
+              dx = this.upPx_[0] - evt.pixel[0];
+              dy = this.upPx_[1] - evt.pixel[1];
+              if (dx * dx + dy * dy <= this.squaredClickTolerance_) {
+                this.end_(evt);
+              } else {
+                this.handleMoveEvent_(evt);
+                this.drawPoint_(evt.coordinate, true);
+              }
             }
           }
         }
@@ -318,10 +350,15 @@ DrawRegularInteraction.prototype.handleEvent_ = function (evt) {
         }
       }
       break;
+    // case 'dblclick':
+    //   if (this.sides_ === 2 || this.sides_ === -2) {
+    //     this.end_(evt);
+    //   }
+    //   break;
     default:
       this.lastEvent = evt.type;
       // Prevent zoom in on dblclick
-      if (this.started_ && evt.type === 'dblclick') {
+      if (this.started_) {
         // evt.stopPropagation();
         return false;
       }
@@ -332,21 +369,21 @@ DrawRegularInteraction.prototype.handleEvent_ = function (evt) {
 
 /** Stop drawing.
  */
-DrawRegularInteraction.prototype.finishDrawing = function () {
-  if (this.started_ && this.coord_) {
-    this.end_({
-      pixel: this.upPx_,
-      coordinate: this.coord_
-    });
-  }
-};
+// DrawRegularInteraction.prototype.finishDrawing = function () {
+//   if (this.started_ && this.coordinate_) {
+//     this.end_({
+//       pixel: this.upPx_,
+//       coordinate: this.coordinate_
+//     });
+//   }
+// };
 
 /**
  * @param {ol.MapBrowserEvent} evt Event.
  */
 DrawRegularInteraction.prototype.handleMoveEvent_ = function (evt) {
   if (this.started_) {
-    this.coord_ = evt.coordinate;
+    this.coordinate_ = evt.coordinate;
     this.coordPx_ = evt.pixel;
     var f = this.drawSketch_(evt);
     this.dispatchEvent({
@@ -371,12 +408,12 @@ DrawRegularInteraction.prototype.start_ = function (evt) {
   if (!this.started_) {
     this.started_ = true;
     this.center_ = evt.coordinate;
-    this.coord_ = null;
+    this.coordinate_ = null;
     var f = this.feature_ = new ol.Feature();
     this.drawSketch_(evt);
     this.dispatchEvent({ type: 'drawstart', feature: f, pixel: evt.pixel, coordinate: evt.coordinate });
   } else {
-    this.coord_ = evt.coordinate;
+    this.coordinate_ = evt.coordinate;
   }
 };
 
@@ -385,37 +422,39 @@ DrawRegularInteraction.prototype.start_ = function (evt) {
  * @return {boolean} `false` to stop the drag sequence.
  */
 DrawRegularInteraction.prototype.end_ = function (evt) {
-  this.coord_ = evt.coordinate;
+  this.coordinate_ = evt.coordinate;
   this.started_ = false;
   // Add new feature
-  if (this.coord_ && this.center_[0] !== this.coord_[0] && this.center_[1] !== this.coord_[1]) {
-    var f = this.feature_;
-    f.setGeometry(this.getGeometry_());
-    if (this.source_) {
-      this.source_.addFeature(f);
-    } else if (this.features_) {
-      this.features_.push(f);
+  if (this.coordinate_) {
+    if (this.sides_ !== 1 && this.center_[0] === this.coordinate_[0] && this.center_[1] === this.coordinate_[1]) {
+      this.dispatchEvent({
+        type: 'drawcancel',
+        feature: null,
+        pixel: evt.pixel,
+        coordinate: evt.coordinate,
+        square: this.square_,
+        centered: this.centered_
+      });
+    } else {
+      var f = this.feature_;
+      f.setGeometry(this.getGeometry_());
+      if (this.source_) {
+        this.source_.addFeature(f);
+      } else if (this.features_) {
+        this.features_.push(f);
+      }
+      this.dispatchEvent({
+        type: 'drawend',
+        feature: f,
+        pixel: evt.pixel,
+        coordinate: evt.coordinate,
+        square: this.square_,
+        centered: this.centered_
+      });
     }
-    this.dispatchEvent({
-      type: 'drawend',
-      feature: f,
-      pixel: evt.pixel,
-      coordinate: evt.coordinate,
-      square: this.square_,
-      centered: this.centered_
-    });
-  } else {
-    this.dispatchEvent({
-      type: 'drawcancel',
-      feature: null,
-      pixel: evt.pixel,
-      coordinate: evt.coordinate,
-      square: this.square_,
-      centered: this.centered_
-    });
   }
 
-  this.center_ = this.coord_ = null;
+  this.center_ = this.coordinate_ = null;
   this.drawSketch_();
 };
 

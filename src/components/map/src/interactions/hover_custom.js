@@ -89,9 +89,9 @@ HoverInteraction.prototype.handleEvent_ = function (event) {
   var feature, layer, layerId, feature_;
   var lonlat = this.getLonlat(event.coordinate);
   var hasFeature = event.map.forEachFeatureAtPixel(event.pixel, (f, l) => {
-    feature = f;
-    layer = l;
-    return true;
+    if (f) { feature = f; }
+    if (l) { layer = l; }
+    return f;
   });
 
   if (hasFeature) {

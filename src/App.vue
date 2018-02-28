@@ -5,12 +5,11 @@
       class="map-container"
       :zoom="5"
       :XYZ="'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}'"
-      :drawProperties="drawProperties"
       @singleclick="handleMapSingleClick"
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-marker
-        :markers="fire"
+        :data="fire"
         :vid="'fire'"
         :bgImg="'./static/images/location.png'"
         cluster
@@ -20,14 +19,42 @@
         @singleclick="handleStationSingleclick"
         @dblclick="handleStationDblclick">
       </ol-marker>
-      <ol-text
+      <ol-marker
+        :data="humidity"
+        :vid="'humidity'"
+        :offset="[25, 15]"
+        :bgImg="'./static/images/station.png'"
         cluster
-        :distance="50"
+        @enter="handleHumidityHoverEnter"
+        @leave="handleHumidityHoverLeave"
+        @singleclick="handleHumiditySingleclick">
+      </ol-marker>
+      <ol-text
         :data="stationName"
         :vid="'stationName'"
+        cluster
+        :distance="50"
         @enter="handleNameHoverEnter"
         @leave="handleNameHoverLeave"
-        @singleclick="handleNameSingleclick"></ol-text>
+        @singleclick="handleNameSingleclick">
+      </ol-text>
+      <ol-vector
+        :data="press"
+        :vid="'press'"
+        @enter="handleVectorEnter"
+        @leave="handleVectorLeave"
+        @singleclick="handleVectorSingleclick">
+      </ol-vector>
+      <ol-draw
+        :type="drawType"
+        :vid="'draw'"
+        @enter="handleDrawEnter"
+        @leave="handleDrawLeave"
+        @singleclick="handleDrawSingleclick"
+        @drawstart="handleDrawDrawstart"
+        @drawend="handleDrawDrawend"
+        ref="draw">
+      </ol-draw>
     </ol-map>
     <div class="menu">
       <button @click="getHumidity">湿度（Marker）</button>
@@ -40,19 +67,23 @@
       <button @click="testSetSource">测试 setSource</button>
     </div>
     <div class="menu2">
-      画图边数 {{this.drawProperties ? '开' : '关'}}：
-      <select name="drawSides" @change="setDrawSides" ref="sides">
+      画图类型: {{this.drawType || 'NO'}}
+      <select name="drawSides" @change="setDrawType" ref="type">
         <option>undefined</option>
-        <option value="0">0</option>
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
+        <option value="">空字符串</option>
+        <option value="Square">Square</option>
+        <option value="Rectangle">Rectangle</option>
+        <option value="Circle">Circle</option>
+        <option value="Point">Point</option>
+        <option value="LineString">LineString</option>
+        <option value="Polygon">Polygon</option>
+        <option value="Ellipse">Ellipse</option>
       </select>
       <button @click="clearDrawSource">清空画板</button>
     </div>
-    <div class="lonlat">经纬度：{{ lonlat }}</div>
+    <div class="lonlat">经纬度：{{ lonlat }}
+      <div id="test"></div>
+    </div>
   </div>
 </template>
 
@@ -64,21 +95,37 @@ export default {
   data () {
     return {
       lonlat: '',
-      drawProperties: 0,
+      drawType: null,
       fire: [],
-      stationName: []
+      stationName: [],
+      humidity: [],
+      press: {}
     };
   },
   created () {
     this.getFire();
   },
   methods: {
+    getRandomColor () {
+      var color = '#';
+      for (var i = 0; i < 6; i++) {
+        color += (Math.random() * 16 | 0).toString(16);
+      }
+      return color;
+    },
     handleMapSingleClick (val) {
       console.log('handleMapSingleClick in App', val);
     },
     getHumidity () {
       Element.getHumidity().then(res => {
-        console.log('=== getHumidity (Marker) ===', res);
+        res.data.detail.forEach(val => {
+          if (val.rh < 999999) {
+            val.text = val.rh;
+            val.bgColor = this.getRandomColor();
+            this.humidity.push(val);
+          }
+        });
+        console.log('=== getHumidity (Marker) ===', res, this.humidity);
       });
     },
     getFire () {
@@ -103,7 +150,7 @@ export default {
         console.log('=== getStationName (Text) ===', res);
         res.data.detail.forEach(val => {
           val.text = val.sta_name;
-          val.textColor = '#' + Math.floor(Math.random() * 16777215).toString(16);
+          val.textColor = this.getRandomColor();
         });
         this.stationName = res.data.detail;
       });
@@ -116,6 +163,7 @@ export default {
     getVector () {
       Element.getVector().then(res => {
         console.log('=== getVector (Vector) ===', res);
+        this.press = res.data.detail.datas;
       });
     },
     getRadar () {
@@ -158,14 +206,46 @@ export default {
       // console.log('======== pointerdrag map in App ======>', val);
     },
     handleMapPointermove (val) {
-      this.lonlat = val.lonlat.join(', ');
+      this.lonlat = this.$refs.map.getLonlat(val.coordinate).join(', ');
     },
-    setDrawSides () {
-      console.log('----------->', this.$refs.sides.value, +this.$refs.sides.value);
-      this.drawProperties = +this.$refs.sides.value;
+    setDrawType () {
+      this.drawType = this.$refs.type.value;
     },
     clearDrawSource () {
-      this.$refs.map.clearDrawSource();
+      this.$refs.draw.clearDrawSource();
+    },
+    handleHumidityHoverEnter (val) {
+      console.log(' ----------- hover enter humidity --------->', val);
+    },
+    handleHumidityHoverLeave (val) {
+      console.log(' ----------- hover leave humidity --------->', val);
+    },
+    handleHumiditySingleclick (val) {
+      console.log(' ----------- singleclick humidity --------->', val);
+    },
+    handleVectorSingleclick (val) {
+      console.log(' ----------- singleclick vector --------->', val);
+    },
+    handleVectorEnter (val) {
+      console.log(' ----------- hover enter vector --------->', val);
+    },
+    handleVectorLeave (val) {
+      console.log(' ----------- hover leave vector --------->', val);
+    },
+    handleDrawSingleclick (val) {
+      console.log(' ----------- singleclick draw --------->', val);
+    },
+    handleDrawEnter (val) {
+      console.log(' ----------- hover enter draw --------->', val);
+    },
+    handleDrawLeave (val) {
+      console.log(' ----------- hover leave draw --------->', val);
+    },
+    handleDrawDrawstart (val) {
+      console.log(' ----------- drawstart draw --------->', val);
+    },
+    handleDrawDrawend (val) {
+      console.log(' ----------- drawend draw --------->', val);
     }
   }
 };
