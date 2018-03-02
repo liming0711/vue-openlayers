@@ -3,7 +3,6 @@ import common from '../mixins/common';
 import render from '../mixins/render';
 
 const WIDTH = 3;
-const MAX_POINT = Infinity;
 const TYPE_LIST = ['Rectangle', 'Square', 'Circle', 'Ellipse', 'Point', 'LineString', 'Polygon'];
 
 export default {
@@ -11,16 +10,16 @@ export default {
   render () { return false; },
   mixins: [common, render],
   props: {
-    vid: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      default: 'draw'
-    },
     type: String,
     drawStyle: [Array, Object],
+    maxPoints: {
+      type: Number,
+      default: Infinity
+    },
+    opacity: {
+      type: Number,
+      default: 1
+    },
     zIndex: {
       type: Number,
       default: 5
@@ -50,7 +49,7 @@ export default {
         this.active = false;
       } else {
         if (newType !== this.lastType) {
-          this.load();
+          this._load();
         }
         this.active = true;
         this.lastType = newType;
@@ -64,7 +63,7 @@ export default {
     }
   },
   methods: {
-    load () {
+    _load () {
       if (this.drawInteraction) {
         this.map.removeInteraction(this.drawInteraction);
         this._addInteraction();
@@ -81,7 +80,7 @@ export default {
     },
     _getInteractionType () {
       let type = this.type;
-      if (this.type === 'Square' || this.type === 'Rectangle') {
+      if (this.type === 'Square' || this.type === 'Rectangle' || this.type === 'Ellipse') {
         type = 'Circle';
       }
       return type;
@@ -89,10 +88,8 @@ export default {
     _getGeometryFunction () {
       let geometryFunction;
       if (this.type === 'Square') {
-        geometryFunction = (coordinates, geometry) => {
-          if (!geometry) {
-            geometry = new this.ol.geom.Polygon(null);
-          }
+        geometryFunction = (coordinates, optGeometry) => {
+          const geometry = optGeometry || new this.ol.geom.Polygon(null);
           let start = coordinates[0];
           let end = coordinates[1];
           let l = start[1] - end[1];
@@ -101,6 +98,17 @@ export default {
         };
       } else if (this.type === 'Rectangle') {
         geometryFunction = this.ol.interaction.Draw.createBox();
+      } else if (this.type === 'Ellipse') {
+        // TODO
+        // geometryFunction = (coordinates, optGeometry) => {
+        //   let center = coordinates[0];
+        //   let end = coordinates[1];
+        //   let dx = center[0] - end[0];
+        //   let dy = center[1] - end[1];
+        //   let radius = Math.sqrt(dx * dx + dy * dy);
+        //   let geometry = optGeometry || this.ol.geom.Polygon.fromCircle(new this.ol.geom.Circle(center, radius, 'XY'), 5, 0);
+        //   return geometry;
+        // };
       }
       return geometryFunction;
     },
@@ -123,15 +131,12 @@ export default {
       ];
       return this.drawStyle || defaultStyle;
     },
-    clearDrawSource () {
-      this.layer.getSource().clear();
-    },
     _addInteraction () {
       this.drawInteraction = new this.ol.interaction.Draw({
         source: this.layer.getSource(),
         type: this._getInteractionType(),
         geometryFunction: this._getGeometryFunction(),
-        maxPoints: this.type === 'Square' || this.type === 'Rectangle' ? 2 : MAX_POINT
+        maxPoints: this.maxPoints
       });
       this.map.addInteraction(this.drawInteraction);
       this._registerEvents();
@@ -146,37 +151,10 @@ export default {
       this.drawInteraction.on('drawend', (e) => {
         this.$emit('drawend', e);
       });
+    },
+    clearDrawSource () {
+      this.layer.getSource().clear();
     }
   }
 };
-/*
-createRegularPolygon (optSides, optAngle) {
-  return (
-    function (coordinates, optGeometry) {
-      const center = coordinates[0];
-      const end = coordinates[1];
-      const radius = Math.sqrt(squaredCoordinateDistance(center, end));
-      const geometry = optGeometry || fromCircle(new Circle(center), optSides);
-      const angle = optAngle || Math.atan((end[1] - center[1]) / (end[0] - center[0]));
-      makeRegular(geometry, center, radius, angle);
-      return geometry;
-    }
-  );
-},
-makeRegular (polygon, center, radius, optAngle) {
-  const flatCoordinates = polygon.getFlatCoordinates();
-  const layout = polygon.getLayout();
-  const stride = polygon.getStride();
-  const ends = polygon.getEnds();
-  const sides = flatCoordinates.length / stride - 1;
-  const startAngle = optAngle || 0;
-  for (let i = 0; i <= sides; ++i) {
-    const offset = i * stride;
-    const angle = startAngle + (modulo(i, sides) * 2 * Math.PI / sides);
-    flatCoordinates[offset] = center[0] + (radius * Math.cos(angle));
-    flatCoordinates[offset + 1] = center[1] + (radius * Math.sin(angle));
-  }
-  polygon.setFlatCoordinates(layout, flatCoordinates, ends);
-},
-*/
 </script>

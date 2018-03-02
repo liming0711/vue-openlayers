@@ -42,11 +42,6 @@ export default {
       type: Number,
       default: 18
     },
-    XYZ: {
-      type: String,
-      default: 'http://mt{0-3}.google.cn/vt/lyrs=y&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=G'
-    },
-    source: Object,
     layers: Array,
     // 当 hover 到某个 feature 上的时候忽略地图的 hover 事件，Image 除外
     ignoreFeatureHover: {
@@ -98,11 +93,9 @@ export default {
     return {
       ol: null,
       map: null,
-      tileLayer: null,
       // draw interaction 为活动状态时 drawEnable 为 true，否则为 false
       // drawEnable 为 true 时不再监听所有的 click 和 hover 事件
       drawEnable: false,
-      sourceInstance: null,
       click: null,
       hover: null,
       draw: null
@@ -112,68 +105,49 @@ export default {
     this._initMap();
   },
   watch: {
-    layers (n) {
-      /*
-      sourceInstance = new ol.source.XYZ({
-        url: 'http://mt{0-3}.google.cn/vt/lyrs=y&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=G'
-      });
-
-      OR
-
-      sourceInstance = new ol.source.TileWMS({
-        url: 'http://ngrok.91weather.com:17713/geoserver/Mlog/wms',
-        params: {
-          'LAYERS': 'Mlog:geotools_coverage',
-          'TILED': true
-        }
-      });
-
-      n = new ol.layer.Group({
-        layers: [
-          new ol.layer.Tile({
-            source: sourceInstance,
-            index: 1,
-            type: 'mapbase'
-          })
-        ]
-      });
-      */
-      this.map.setLayerGroup(n);
+    zoom (newZoom) {
+      this.map && this.map.getView() && this.map.getView().setZoom(newZoom);
     },
-    source (n) {
-      this.tileLayer && this.tileLayer.setSource(n);
+    center (newCenter) {
+      this.map && this.map.getView() && this.map.getView().setCenter(ol.proj.transform(newCenter, 'EPSG:4326', 'EPSG:3857'));
     },
-    XYZ (n) {
-      this.sourceInstance && this.sourceInstance.setUrl(n);
+    layers (newLayers) {
+      if (newLayers.length) {
+        let layerGroup = new ol.layer.Group({
+          layers: newLayers
+        });
+        this.map && this.map.setLayerGroup(layerGroup);
+      }
     }
   },
   methods: {
     _initMap () {
-      let layers = this.layers;
-      if (!layers) {
-        this.sourceInstance = this.source || new ol.source.XYZ({
-          url: this.XYZ
-        });
-        this.tileLayer = new ol.layer.Tile({
-          source: this.sourceInstance,
-          index: 1,
-          type: 'base'
-        });
-        layers = [this.tileLayer];
-      }
       this.map = new ol.Map({
         target: this.$refs.map,
         logo: false,
-        layers: layers,
+        layers: this.layers,
         view: new ol.View({
           center: ol.proj.transform(this.center, 'EPSG:4326', 'EPSG:3857'),
           zoom: this.zoom,
           minZoom: this.minZoom,
           maxZoom: this.maxZoom
         }),
-        /* eslint-disable */
+        controls: ol.control.defaults({
+          attribution: false
+        }).extend([
+          new ol.control.ScaleLine(),
+          new ol.control.FullScreen(),
+          new ol.control.MousePosition({
+            className: 'custom-mouse-position',
+            target: document.getElementById('test'),
+            coordinateFormat: (coord) => {
+              return ol.coordinate.format(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326'), '{x} | {y}', 6);
+            },
+            undefinedHTML: '--'
+          })
+        ]),
         // interactions: ol.interaction.defaults().extend([new app.Drag()]),
-        interactions: new ol.interaction.defaults({
+        interactions: ol.interaction.defaults({
           dragPan: this.dragPan,
           keyboardZoom: this.keyboardZoom,
           keyboardPan: this.keyboardPan,
@@ -272,6 +246,25 @@ export default {
         lonlat = this.ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
       }
       return lonlat;
+    },
+    clearOverlays () {
+      // 地图上 layer 比较多时，removeLayer 无法同步进行，(overlay 同理)
+      // 所以使用闭包异步处理，确保所有需要删除的图层都被正确删除
+      // setTimeout 使用的定时器值是浏览器绘制的最小时间：1000 / 60, 即每秒60帧
+      this.map.getLayers().getArray().forEach(layer => {
+        setTimeout((() => {
+          return () => {
+            layer.get('massClear') && this.map && this.map.removeLayer(layer);
+          };
+        })(), 16.7);
+      });
+      this.map.getOverlays().getArray().forEach(overlay => {
+        setTimeout((() => {
+          return () => {
+            overlay.get('massClear') && this.map && this.map.removeOverlay(overlay);
+          };
+        })(), 16.7);
+      });
     }
   },
   beforeDestroy () {

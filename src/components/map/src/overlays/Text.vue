@@ -10,14 +10,6 @@ export default {
   render () { return false; },
   mixins: [common, render, point, reload],
   props: {
-    vid: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      default: 'text'
-    },
     data: {
       type: Array,
       required: true
@@ -49,6 +41,10 @@ export default {
       validator: function (value) {
         return ['clean', 'keep'].indexOf(value) > -1;
       }
+    },
+    opacity: {
+      type: Number,
+      default: 1
     },
     zIndex: {
       type: Number,

@@ -3,11 +3,12 @@
     <ol-map
       ref="map"
       class="map-container"
-      :zoom="5"
-      :XYZ="'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}'"
+      :zoom="zoom"
+      :center="center"
       @singleclick="handleMapSingleClick"
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
+      <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
       <ol-marker
         :data="fire"
         :vid="'fire'"
@@ -45,9 +46,18 @@
         @leave="handleVectorLeave"
         @singleclick="handleVectorSingleclick">
       </ol-vector>
+      <ol-line
+        :data="railway"
+        :vid="'railway'"
+        @enter="handleLineEnter"
+        @leave="handleLineLeave"
+        @singleclick="handleLineSingleclick">
+      </ol-line>
+      <ol-image :data="radarImg" :bbox="radarBbox" :vid="'radar'"></ol-image>
       <ol-draw
         :type="drawType"
         :vid="'draw'"
+        :opacity="0.5"
         @enter="handleDrawEnter"
         @leave="handleDrawLeave"
         @singleclick="handleDrawSingleclick"
@@ -55,8 +65,15 @@
         @drawend="handleDrawDrawend"
         ref="draw">
       </ol-draw>
+      <ol-overlay :vid="'overlay'" :position="overlayPosition">
+        <h3 class="overlay-title" style="color: #F5A623; padding-bottom: 10px; white-space: nowrap;">pixel: {{ overlayInfoObj.pixel || '-' }}</h3>
+        <ul class="overlay-list" style="line-height: 18px;">
+          <li class="overlay-item">{{ overlayInfoObj.type || '-' }}</li>
+          <li class="overlay-item">{{ overlayInfoObj.coordinate || '-'}}</li>
+        </ul>
+      </ol-overlay>
     </ol-map>
-    <div class="menu">
+    <div class="menu menu1">
       <button @click="getHumidity">湿度（Marker）</button>
       <button @click="getFire">火点🔥（Marker）</button>
       <button @click="getWind">风（Marker）</button>
@@ -66,7 +83,7 @@
       <button @click="getRadar">雷达（Image）</button>
       <button @click="testSetSource">测试 setSource</button>
     </div>
-    <div class="menu2">
+    <div class="menu menu2">
       画图类型: {{this.drawType || 'NO'}}
       <select name="drawSides" @change="setDrawType" ref="type">
         <option>undefined</option>
@@ -81,6 +98,12 @@
       </select>
       <button @click="clearDrawSource">清空画板</button>
     </div>
+    <div class="menu menu3">
+      <button @click="switchTile">切换地图</button>
+    </div>
+    <div class="menu menu4">
+      <button @click="clearMapOverlays">清除地图覆盖物</button>
+    </div>
     <div class="lonlat">经纬度：{{ lonlat }}
       <div id="test"></div>
     </div>
@@ -90,16 +113,46 @@
 <script>
 import Element from './api/element';
 
+const XYZTileList = [
+  'http://mt{0-3}.google.cn/vt/lyrs=y&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=G',
+  'http://mt{0-3}.google.cn/vt/lyrs=t@131,r@216000000&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=Gal',
+  'http://mt{0-3}.google.cn/vt/lyrs=m@235000000&hl=zh-CN&gl=CN&src=app&x={x}&y={y}&z={z}&s=Galileo',
+  'http://t{0-7}.tianditu.cn/DataServer?T=vec_w&X={x}&Y={y}&L={z}',
+  'http://t{0-7}.tianditu.cn/DataServer?T=cia_w&X={x}&Y={y}&L={z}',
+  'http://t{0-7}.tianditu.cn/DataServer?T=img_w&X={x}&Y={y}&L={z}',
+  'http://t{0-7}.tianditu.cn/DataServer?T=cia_w&X={x}&Y={y}&L={z}',
+  'http://webrd0{1-4}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
+  'http://webst0{1-4}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=6',
+  'http://webst0{1-4}.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8',
+  'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunity/MapServer/tile/{z}/{y}/{x}',
+  'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineCommunityENG/MapServer/tile/{z}/{y}/{x}',
+  'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetGray/MapServer/tile/{z}/{y}/{x}',
+  'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}',
+  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_boundaryandlabel/MapServer/tile/{z}/{y}/{x}',
+  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_boundaryLine/MapServer/tile/{z}/{y}/{x}',
+  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_label/MapServer/tile/{z}/{y}/{x}',
+  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/subway/MapServer/tile/{z}/{y}/{x}',
+  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/ocean/MapServer/tile/{z}/{y}/{x}'
+];
+
 export default {
   name: 'App',
   data () {
     return {
+      zoom: 5,
+      center: [116.397228, 39.909605],
       lonlat: '',
       drawType: null,
       fire: [],
       stationName: [],
       humidity: [],
-      press: {}
+      press: {},
+      tileXYZ: XYZTileList[0],
+      railway: [],
+      radarImg: '',
+      radarBbox: [],
+      overlayPosition: [],
+      overlayInfoObj: {}
     };
   },
   created () {
@@ -115,6 +168,8 @@ export default {
     },
     handleMapSingleClick (val) {
       console.log('handleMapSingleClick in App', val);
+      this.overlayPosition = this.$refs.map.getLonlat(val.coordinate);
+      this.overlayInfoObj = val;
     },
     getHumidity () {
       Element.getHumidity().then(res => {
@@ -158,6 +213,17 @@ export default {
     getRailway () {
       Element.getRailway().then(res => {
         console.log('=== getRailway (Line) ===', res);
+        res.data.result.items.forEach(val => {
+          let line = [];
+          if (val.lines && val.lines.length > 1) {
+            val.lines.forEach((value, index) => {
+              line.push(value[1]);
+            });
+            this.railway.push(line);
+          }
+        });
+        this.zoom = 7;
+        this.center = [116.386974, 26.652142];
       });
     },
     getVector () {
@@ -169,6 +235,8 @@ export default {
     getRadar () {
       Element.getRadar().then(res => {
         console.log('=== getRadar (Image) ===', res);
+        this.radarImg = res.data.detail[0].pic;
+        this.radarBbox = res.data.detail[0].bbox;
       });
     },
     testSetSource () {
@@ -246,6 +314,24 @@ export default {
     },
     handleDrawDrawend (val) {
       console.log(' ----------- drawend draw --------->', val);
+    },
+    getRandomInt (min, max) {
+      return Math.floor(Math.random() * (max - min + 1) + min);
+    },
+    switchTile () {
+      this.tileXYZ = XYZTileList[this.getRandomInt(0, 18)];
+    },
+    handleLineSingleclick (val) {
+      console.log(' ----------- singleclick line --------->', val);
+    },
+    handleLineEnter (val) {
+      console.log(' ----------- hover enter line --------->', val);
+    },
+    handleLineLeave (val) {
+      console.log(' ----------- hover leave line --------->', val);
+    },
+    clearMapOverlays () {
+      this.$refs.map.clearOverlays();
     }
   }
 };
@@ -268,26 +354,32 @@ html, body {
 }
 .menu {
   position: absolute;
-  left: 20px;
-  bottom: 20px;
   background-color: #ccc;
   padding: 10px;
   border-radius: 4px;
 }
-.menu2 {
-  position: absolute;
+.menu1 {
   left: 20px;
-  bottom: 70px;
-  background-color: #ccc;
-  padding: 10px;
-  border-radius: 4px;
+  bottom: 36px;
+}
+.menu2 {
+  left: 240px;
+  bottom: 86px;
+}
+.menu3 {
+  left: 20px;
+  bottom: 86px;
+}
+.menu4 {
+  left: 110px;
+  bottom: 86px;
 }
 .lonlat {
   position: absolute;
   top: 0;
-  right: 0;
+  right: 50px;
   padding: 5px 10px;
-  border-radius: 0 0 0 4px;
+  border-radius: 0 0 4px 4px;
   background-color: #fff;
 }
 </style>

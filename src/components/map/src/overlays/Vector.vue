@@ -5,19 +5,13 @@ import common from '../mixins/common';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
 
+const TYPE = 'vector';
+
 export default {
   name: 'OlVector',
   render () { return false; },
   mixins: [common, render, reload],
   props: {
-    name: {
-      type: String,
-      default: 'vector'
-    },
-    vid: {
-      type: String,
-      required: true
-    },
     data: {
       type: Object,
       required: true
@@ -65,6 +59,10 @@ export default {
         return ['clean', 'keep'].indexOf(value) > -1;
       }
     },
+    opacity: {
+      type: Number,
+      default: 1
+    },
     zIndex: {
       type: Number,
       default: 2
@@ -78,15 +76,15 @@ export default {
     // TODO 使用 smooth 使曲线平滑
     // TODO 矢量图里的文字可能有多种颜色（e.g：高压是蓝色，低压是红色）
     // TODO 兼容其他投影，现在只支持 3857
-    load () {
+    _load () {
       if (isEmptyObject(this.data)) { return false; }
-      this.render('vector', this._getSource(this._getFeatures()));
+      this.render(TYPE, this._getSource(this._getFeatures(this.data)));
     },
-    _getFeatures () {
-      let features = new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(this.data);
+    _getFeatures (data) {
+      let features = new this.ol.format.GeoJSON({ featureProjection: 'EPSG:3857' }).readFeatures(data);
       features.forEach(feature => {
-        feature.attr = this.data;
-        feature.set('attr', this.data);
+        feature.attr = data;
+        feature.set('attr', data);
         feature.set('vid', this.vid);
         feature.setStyle(this._getStyle(feature));
       });

@@ -2,20 +2,16 @@
 // TODO 添加点击事件和悬停事件
 // TODO 支持 zIndex 自定制
 import common from '../mixins/common';
+import reload from '../mixins/reload';
+
+const TYPE = 'image';
 
 export default {
   name: 'OlImage',
-  mixins: [common],
+  render () { return false; },
+  mixins: [common, reload],
   props: {
-    vid: {
-      type: String,
-      required: true
-    },
-    name: {
-      type: String,
-      default: 'image'
-    },
-    imgURL: {
+    data: {
       type: String,
       required: true
     },
@@ -23,71 +19,48 @@ export default {
       type: Array,
       required: true
     },
+    noDataMode: {
+      type: String,
+      default: 'clean',
+      validator: function (value) {
+        return ['clean', 'keep'].indexOf(value) > -1;
+      }
+    },
     opacity: {
       type: Number,
-      default: 0.8
+      default: 1
     },
-    clicking: {
-      type: Boolean,
-      default: false
-    },
-    hovering: {
-      type: Boolean,
-      default: false
-    },
-    stopEvent: {
-      type: Boolean,
-      default: false
+    zIndex: {
+      type: Number,
+      default: 4
     },
     massClear: {
       type: Boolean,
       default: true
     }
   },
-  watch: {
-    imgURL () {
-      this.load();
-    },
-    opacity () {
-      let imageLayer = this.getLayerByParam('id', this.vid);
-      if (!this.imgURL || !this.imgURL.length) {
-        return false;
-      }
-      imageLayer.setOpacity(this.opacity);
-    }
-  },
   methods: {
-    load () {
-      console.log('in image vue', this.imgURL);
-
-      let imageLayer = this.getLayerByParam('id', this.vid);
-
-      if (!this.imgURL || !this.imgURL.length) {
-        imageLayer && this.map.removeLayer(imageLayer);
-        return false;
-      }
-
-      if (imageLayer) {
-        let layerSource = new this.ol.source.ImageStatic({
-          url: this.imgURL,
-          imageExtent: this.ol.proj.transformExtent(this.bbox, 'EPSG:4326', 'EPSG:3857')
-        });
-
-        imageLayer.setSource(layerSource);
-      } else {
-        this.layer = new this.ol.layer.Image({
-          id: this.vid,
-          name: this.name,
-          type: 'image',
-          source: new this.ol.source.ImageStatic({
-            url: this.imgURL,
-            imageExtent: this.ol.proj.transformExtent(this.bbox, 'EPSG:4326', 'EPSG:3857')
-          }),
-          opacity: this.opacity,
-          zIndex: 1
-        });
-        this.$parent.map.addLayer(this.layer);
-      }
+    _load () {
+      if (!this.data.length) { return false; }
+      this.layer = new this.ol.layer.Image({
+        id: this.vid,
+        name: this.name,
+        type: TYPE,
+        massClear: this.massClear || true,
+        source: this._getSource(this._getFeatures(this.data)),
+        opacity: this.opacity,
+        zIndex: 1
+      });
+      this.$parent.map.addLayer(this.layer);
+    },
+    _getFeatures (data) {
+      return data;
+    },
+    _getSource (image) {
+      return new this.ol.source.ImageStatic({
+        url: image,
+        imageExtent: this.ol.proj.transformExtent(this.bbox, 'EPSG:4326', 'EPSG:3857')
+      });
     }
   }
 };

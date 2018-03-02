@@ -16,18 +16,21 @@ export default {
       }
 
       if (existLayer) {
-        existLayer.setSource(this._getSource(this._getFeatures()));
+        existLayer.setSource(this._getSource(this._getFeatures(newData)));
       } else {
-        this.load();
+        this._load();
       }
+    },
+    opacity (newOpacity) {
+      this.layer && this.layer.setOpacity(Math.abs(newOpacity));
     }
   },
   methods: {
     _getLayerByParam (key, value) {
-      let allLayers = this.map.getLayers().getArray();
-      for (let i = allLayers.length - 1; i >= 0; i--) {
-        if (allLayers[i].get(key) === value) {
-          return allLayers[i];
+      let layersList = this.map.getLayers().getArray();
+      for (let i = layersList.length - 1; i >= 0; i--) {
+        if (layersList[i].get(key) === value) {
+          return layersList[i];
         }
       }
       return false;

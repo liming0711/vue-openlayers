@@ -1,22 +1,18 @@
 <script>
 import { createLineStyle } from '../utils/style';
 import common from '../mixins/common';
+import render from '../mixins/render';
+import reload from '../mixins/reload';
+
+const TYPE = 'line';
 
 export default {
   // TODO 增加支持描边
   name: 'OlLine',
   render () { return false; },
-  mixins: [common],
+  mixins: [common, render, reload],
   props: {
-    name: {
-      type: String,
-      default: 'line'
-    },
-    vid: {
-      type: String,
-      required: true
-    },
-    lines: {
+    data: {
       type: Array,
       required: true
     },
@@ -38,62 +34,51 @@ export default {
       type: Number,
       default: 1.5
     },
-    clicking: {
-      type: Boolean,
-      default: false
+    noDataMode: {
+      type: String,
+      default: 'clean',
+      validator: function (value) {
+        return ['clean', 'keep'].indexOf(value) > -1;
+      }
     },
-    hovering: {
-      type: Boolean,
-      default: false
+    opacity: {
+      type: Number,
+      default: 1
     },
-    stopEvent: {
-      type: Boolean,
-      default: true
+    zIndex: {
+      type: Number,
+      default: 3
     },
     massClear: {
       type: Boolean,
       default: true
     }
   },
-  watch: {
-    lines () {
-      this.load();
-    }
-  },
   methods: {
-    load () {
-      // TODO 增加 setSource 方法
-      console.log('in MultiLine vue');
-      let multiLineLayer = this.getLayerByParam('id', this.vid);
+    _load () {
+      if (!this.data.length) { return false; }
+      this.render(TYPE, this._getSource(this._getFeatures(this.data)));
+    },
+    _getFeatures (data) {
+      let features = new this.ol.Feature(new this.ol.geom.MultiLineString(data).transform('EPSG:4326', 'EPSG:3857'));
+      features.attr = data;
+      features.set('attr', data);
+      features.set('vid', this.vid);
+      features.setStyle(this._getStyle());
 
-      if (!this.lines.length) {
-        multiLineLayer && this.map.removeLayer(multiLineLayer);
-        return false;
-      }
-
-      let feature = new this.ol.Feature(new this.ol.geom.MultiLineString(this.lines).transform('EPSG:4326', 'EPSG:3857'));
-      feature.attr = this.lines;
-      feature.id = this.vid;
-      feature.clicking = this.clicking;
-      feature.hovering = this.hovering;
-      feature.stopEvent = this.stopEvent;
-      feature.style = createLineStyle(this.ol, {
+      return [features];
+    },
+    _getSource (features) {
+      return new this.ol.source.Vector({features: features});
+    },
+    _getStyle () {
+      let style = createLineStyle(this.ol, {
         strokeColor: this.lineColor,
         strokeWidth: this.lineWidth,
         lineDash: this.lineDash,
         lineCap: this.lineCap
       });
-      this.layer = new this.ol.layer.Vector({
-        id: this.vid,
-        name: this.name,
-        type: 'multiLine',
-        source: new this.ol.source.Vector({ features: [feature] }),
-        style: feature => {
-          return new this.ol.style.Style(feature.style);
-        },
-        zIndex: 3
-      });
-      this.$parent.map.addLayer(this.layer);
+      return new this.ol.style.Style(style);
     }
   }
 };
