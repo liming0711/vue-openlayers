@@ -1,9 +1,12 @@
+- draw point 有bug，无法清除
 - hover、 click 或其他事件的时候需要额外的样式，各 overlays 可接受两个的样式，一个渲染的时候，一个其他事件触发
 - 各 overlays 的默认样式需要调整
-- 4.6.0 新增了 textBackgroundFill 和 textBackgroundStroke 属性，看是否可整合进 Marker
 - 各 feature 的 attr 属性需要删除，仅做调试用
-- Draw 的椭圆参数，以及优化创建规则多边形，源码中创建规则多边形的相关代码：
-- heatmap layer
 - line arrow
+- control
+- 点击之后通过经纬度去高德查询地址
 - map 支持可配置 view ==> 多 view 切换
 - 通过 mouse position control 得到的经纬度和直接转换 coordinate 得到的经纬度不一致
+- 4.6.0 新增了 textBackgroundFill 和 textBackgroundStroke 属性，看是否可整合进 Marker
+- Draw 的椭圆参数
+- heatmap layer

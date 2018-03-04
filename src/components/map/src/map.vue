@@ -214,8 +214,12 @@ export default {
         if (this.drawEnable) { return false; }
         if (event.selected.length) {
           this._broadcast(this._getSingleFeature(event.selected[0]).get('vid'), 'singleclick', event);
+          this.click.getFeatures().clear(); // !important 如果不清除则无法连续点击同一个 feature
         }
       });
+      // this.click.getFeatures().on('remove', (event) => {
+      //   this._broadcast(this._getSingleFeature(event.element).get('vid'), 'unclick', event);
+      // });
     },
     _addHoverInteraction () {
       this.hover = new this.ol.interaction.Select({

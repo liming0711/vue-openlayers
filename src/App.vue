@@ -16,9 +16,8 @@
         cluster
         @enter="handleStationHoverEnter"
         @leave="handleStationHoverLeave"
-        @click="handleStationClick"
         @singleclick="handleStationSingleclick"
-        @dblclick="handleStationDblclick">
+        @unclick="handleStationUnclick">
       </ol-marker>
       <ol-marker
         :data="humidity"
@@ -65,8 +64,8 @@
         @drawend="handleDrawDrawend"
         ref="draw">
       </ol-draw>
-      <ol-overlay :vid="'overlay'" :position="overlayPosition">
-        <h3 class="overlay-title" style="color: #F5A623; padding-bottom: 10px; white-space: nowrap;">pixel: {{ overlayInfoObj.pixel || '-' }}</h3>
+      <ol-overlay :vid="'overlay'" :position="overlayPosition" :title="'overlay title'" :customClass="'custom-overlay'">
+        <h3 class="overlay-title" style="color: #F5A623; margin: 0;">pixel: {{ overlayInfoObj.pixel || '-' }}</h3>
         <ul class="overlay-list" style="line-height: 18px;">
           <li class="overlay-item">{{ overlayInfoObj.type || '-' }}</li>
           <li class="overlay-item">{{ overlayInfoObj.coordinate || '-'}}</li>
@@ -168,7 +167,7 @@ export default {
     },
     handleMapSingleClick (val) {
       console.log('handleMapSingleClick in App', val);
-      this.overlayPosition = this.$refs.map.getLonlat(val.coordinate);
+      this.overlayPosition = val.coordinate;
       this.overlayInfoObj = val;
     },
     getHumidity () {
@@ -252,14 +251,11 @@ export default {
     handleStationHoverLeave (val) {
       console.log('======== hover leave fire in App ======>', val);
     },
-    handleStationClick (val) {
-      console.log('======== click fire in App ======>', val);
-    },
     handleStationSingleclick (val) {
       console.log('======== singleclick fire in App ======>', val);
     },
-    handleStationDblclick (val) {
-      console.log('======== dblclick fire in App ======>', val);
+    handleStationUnclick (val) {
+      console.log('======== unclick fire in App ======>', val);
     },
     handleNameHoverEnter (val) {
       console.log('======== hover enter name in App ======>', val);
@@ -381,5 +377,9 @@ html, body {
   padding: 5px 10px;
   border-radius: 0 0 4px 4px;
   background-color: #fff;
+}
+.custom-overlay {
+  background-color: #fff;
+  width: 300px;
 }
 </style>
