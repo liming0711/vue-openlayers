@@ -1,14 +1,25 @@
 <template>
   <div
     class="ol-overlay__wrapper"
-    :class="{ 'is-fullscreen': type === 'fullscreen', 'is-dynamic': type === 'dynamic' }"
+    :class="{
+      'is-fullscreen': type === 'fullscreen',
+      'is-dynamic': type === 'dynamic',
+      'is-popup': type === 'popup'
+    }"
     :style="wrapperStyle"
     ref="wrapper"
     @click.self="_handleWrapperClick">
+    <div v-if="type === 'popup'" class="ol-overlay__marker" ref="marker">
+      <slot name="marker"></slot>
+    </div>
     <div
       class="ol-overlay"
       :class="customClass"
+      :style="{ left: overlayLeft, backgroundColor: color }"
       ref="overlay">
+      <div v-if="type === 'popup'" class="ol-overlay__arrow" :style="{ borderRightColor: color }"></div>
+      <div v-if="type === 'dynamic'" class="ol-overlay__pulse__inner" :style="pulseStyle"></div>
+      <div v-if="type === 'dynamic'" class="ol-overlay__pulse__outer" :style="pulseStyle"></div>
       <div v-if="type !== 'dynamic'" class="ol-overlay__header">
         <slot name="title">
           <span class="ol-overlay__title">{{ title }}</span>
@@ -38,7 +49,8 @@ export default {
     return {
       overlay: null,
       closeBtnTop: 0,
-      closeBtnRight: 0
+      closeBtnRight: 0,
+      overlayLeft: 0
     };
   },
   props: {
@@ -58,7 +70,7 @@ export default {
     },
     type: {
       type: String,
-      default: 'popup',
+      default: 'dynamic',
       validator: function (value) {
         return ['fullscreen', 'popup', 'dynamic'].indexOf(value) > -1;
       }
@@ -66,6 +78,10 @@ export default {
     customClass: {
       type: String,
       default: ''
+    },
+    color: {
+      type: String,
+      default: '#fff'
     },
     closeOnClickModal: {
       type: Boolean,
@@ -118,6 +134,12 @@ export default {
         style.right = this.closeBtnRight + 'px';
       }
       return style;
+    },
+    pulseStyle () {
+      return {
+        borderColor: this.color,
+        boxShadow: `1px 1px 16px ${this.color}`
+      };
     }
   },
   watch: {
@@ -139,6 +161,16 @@ export default {
       let overlayRight = (document.body.clientWidth - this.$refs.overlay.offsetWidth) / 2;
       this.closeBtnTop = -(overlayTop - 20 - 20);
       this.closeBtnRight = -(overlayRight - 20);
+
+      this.overlayLeft = '50%';
+    } else if (this.type === 'popup') {
+      if (this.$slots.marker) {
+        this.overlayLeft = '22px';
+      } else {
+        this.overlayLeft = '8px';
+      }
+    } else {
+      this.overlayLeft = 0;
     }
   },
   methods: {
@@ -192,6 +224,79 @@ export default {
 .ol-overlay__wrapper.is-dynamic {
   position: relative;
 }
+.ol-overlay__marker {
+  float: left;
+  width: 20px;
+  height: 20px;
+  margin-top: -10px;
+  margin-left: -10px;
+}
+.ol-overlay {
+  position: relative;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+  z-index: 9;
+}
+.ol-overlay__wrapper.is-fullscreen .ol-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate3d(-50%, -50%, 0);
+}
+.ol-overlay__wrapper.is-popup .ol-overlay {
+  top: -20px;
+  left: 10px;
+}
+.ol-overlay__wrapper.is-popup .ol-overlay__arrow {
+  position: absolute;
+  top: 10px;
+  left: -16px;
+  border: 8px solid transparent;
+  filter: drop-shadow(0 2px 12px rgba(0, 0, 0, .03));
+}
+.ol-overlay__wrapper.is-dynamic .ol-overlay {
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #fff;
+}
+.ol-overlay__wrapper.is-dynamic .ol-overlay__pulse__inner {
+  /* content: ''; */
+  position: absolute;
+  height: 18px;
+  width: 18px;
+  left: -8px;
+  top: -8px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  opacity: 0.0;
+  animation: pulse-inner 1s ease-out;
+  animation-iteration-count: infinite;
+  box-shadow: 1px 1px 16px #fff;
+}
+.ol-overlay__wrapper.is-dynamic .ol-overlay__pulse__outer {
+  /* content: ''; */
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: -9px;
+  top: -9px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  opacity: 0.0;
+  animation: pulse-outer 1s ease-out;
+  animation-iteration-count: infinite;
+  box-shadow: 1px 1px 16px #fff;
+}
+.ol-overlay__header {
+  padding: 20px;
+  padding-bottom: 0;
+}
+.ol-overlay__title {
+  line-height: 24px;
+  font-size: 18px;
+}
 .ol-overlay__headerbtn{
   position: absolute;
   padding: 0;
@@ -205,66 +310,12 @@ export default {
   width: 10px;
   height: 10px;
 }
-.ol-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 9;
-}
-.ol-overlay__wrapper.is-fullscreen .ol-overlay {
-  top: 50%;
-  left: 50%;
-  transform: translate3d(-50%, -50%, 0);
-}
-.ol-overlay__header {
-  padding: 20px;
-  padding-bottom: 0;
-}
-.ol-overlay__title {
-  line-height: 24px;
-  font-size: 18px;
-}
 .ol-overlay__body {
   padding: 20px;
   line-height: 24px;
   font-size: 14px;
 }
 
-.ol-overlay__wrapper.is-dynamic .ol-overlay {
-  position: relative;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #ff0000;
-}
-.ol-overlay__wrapper.is-dynamic .ol-overlay::after {
-  content: '';
-  position: absolute;
-  height: 18px;
-  width: 18px;
-  left: -8px;
-  top: -8px;
-  border: 2px solid #ff0000;
-  border-radius: 50%;
-  opacity: 0.0;
-  animation: pulse-inner 1s ease-out;
-  animation-iteration-count: infinite;
-  box-shadow: 1px 1px 16px #ff0000;
-}
-.ol-overlay__wrapper.is-dynamic .ol-overlay::before {
-  content: '';
-  position: absolute;
-  height: 20px;
-  width: 20px;
-  left: -9px;
-  top: -9px;
-  border: 2px solid #ff0000;
-  border-radius: 50%;
-  opacity: 0.0;
-  animation: pulse-outer 1s ease-out;
-  animation-iteration-count: infinite;
-  box-shadow: 1px 1px 16px #ff0000;
-}
 @keyframes pulse-inner {
   0% {
     -webkit-transform: scale(0.1, 0.1); opacity: 0.0;

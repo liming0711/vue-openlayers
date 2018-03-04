@@ -16,8 +16,7 @@
         cluster
         @enter="handleStationHoverEnter"
         @leave="handleStationHoverLeave"
-        @singleclick="handleStationSingleclick"
-        @unclick="handleStationUnclick">
+        @singleclick="handleStationSingleclick">
       </ol-marker>
       <ol-marker
         :data="humidity"
@@ -65,6 +64,8 @@
         ref="draw">
       </ol-draw>
       <ol-overlay :vid="'overlay'" :position="overlayPosition" :title="'overlay title'" :customClass="'custom-overlay'">
+        <!-- <img :src="'./static/images/location.png'" slot="marker" style="width: 20px;" /> -->
+        <!-- <div slot="marker" style="width: 20px; height: 20px; display: inline-block; background-color: #f00;"></div> -->
         <h3 class="overlay-title" style="color: #F5A623; margin: 0;">pixel: {{ overlayInfoObj.pixel || '-' }}</h3>
         <ul class="overlay-list" style="line-height: 18px;">
           <li class="overlay-item">{{ overlayInfoObj.type || '-' }}</li>
@@ -254,9 +255,6 @@ export default {
     handleStationSingleclick (val) {
       console.log('======== singleclick fire in App ======>', val);
     },
-    handleStationUnclick (val) {
-      console.log('======== unclick fire in App ======>', val);
-    },
     handleNameHoverEnter (val) {
       console.log('======== hover enter name in App ======>', val);
     },
@@ -379,7 +377,6 @@ html, body {
   background-color: #fff;
 }
 .custom-overlay {
-  background-color: #fff;
   width: 300px;
 }
 </style>
