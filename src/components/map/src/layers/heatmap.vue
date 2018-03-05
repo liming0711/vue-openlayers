@@ -1,12 +1,13 @@
 <script>
-import common from '../mixins/common';
+import ready from '../mixins/ready';
+import destroy from '../mixins/destroy';
 
 const TYPE = 'heatmap';
 
 export default {
   name: 'OlHeatmap',
   render () { return false; },
-  mixins: [common],
+  mixins: [ready, destroy],
   props: {
     vid: {
       type: String,

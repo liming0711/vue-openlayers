@@ -12,6 +12,7 @@ import debounce from 'throttle-debounce/debounce';
 import feature from './mixins/feature';
 
 import broadcast from './utils/broadcast';
+import { getDataType } from './utils/util';
 
 const DEBOUNCE_TIME = 400;
 
@@ -251,21 +252,36 @@ export default {
       }
       return lonlat;
     },
-    clearOverlays () {
+    clearOverlays (exceptLayerIdList = [], exceptOverlayIdList = []) {
+      let checkException = function (arr) {
+        if (getDataType(arr) !== 'Array') {
+          console.error('clearOverlays 参数类型不正确，只接受数组类型');
+          return [];
+        }
+        return arr;
+      };
+
+      exceptLayerIdList = checkException(exceptLayerIdList);
+      exceptOverlayIdList = checkException(exceptOverlayIdList);
+
       // 地图上 layer 比较多时，removeLayer 无法同步进行，(overlay 同理)
       // 所以使用闭包异步处理，确保所有需要删除的图层都被正确删除
       // setTimeout 使用的定时器值是浏览器绘制的最小时间：1000 / 60, 即每秒60帧
       this.map.getLayers().getArray().forEach(layer => {
         setTimeout((() => {
           return () => {
-            layer.get('massClear') && this.map && this.map.removeLayer(layer);
+            if (layer.get('massClear') && exceptLayerIdList.indexOf(layer.get('id')) < 0) {
+              this.map && this.map.removeLayer(layer);
+            }
           };
         })(), 16.7);
       });
       this.map.getOverlays().getArray().forEach(overlay => {
         setTimeout((() => {
           return () => {
-            overlay.get('massClear') && this.map && this.map.removeOverlay(overlay);
+            if (overlay.get('massClear') && exceptOverlayIdList.indexOf(overlay.get('id')) < 0) {
+              this.map && this.map.removeOverlay(overlay);
+            }
           };
         })(), 16.7);
       });

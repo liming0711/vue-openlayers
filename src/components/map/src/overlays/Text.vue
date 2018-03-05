@@ -1,15 +1,21 @@
 <script>
 import { createTextStyle } from '../utils/style';
-import common from '../mixins/common';
+import ready from '../mixins/ready';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
 import point from '../mixins/point';
+import destroy from '../mixins/destroy';
 
 export default {
   name: 'OlText',
   render () { return false; },
-  mixins: [common, render, point, reload],
+  mixins: [ready, render, point, reload, destroy],
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
+    name: String,
     data: {
       type: Array,
       required: true

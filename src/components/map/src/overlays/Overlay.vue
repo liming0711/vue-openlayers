@@ -40,11 +40,11 @@
 </template>
 
 <script>
-import common from '../mixins/common';
+import ready from '../mixins/ready';
 
 export default {
   name: 'OlOverlay',
-  mixins: [common],
+  mixins: [ready],
   data () {
     return {
       overlay: null,
@@ -54,6 +54,10 @@ export default {
     };
   },
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
     position: {
       type: Array,
       required: true
@@ -70,7 +74,7 @@ export default {
     },
     type: {
       type: String,
-      default: 'dynamic',
+      default: 'popup',
       validator: function (value) {
         return ['fullscreen', 'popup', 'dynamic'].indexOf(value) > -1;
       }
@@ -187,7 +191,7 @@ export default {
           duration: this.autoPanAnimation
         }
       });
-      this.overlay.set('name', this.name);
+      this.overlay.set('id', this.vid);
       this.overlay.set('massClear', this.massClear);
       this.map.addOverlay(this.overlay);
     },
@@ -209,6 +213,9 @@ export default {
       if (!this.closeOnClickModal) { return false; }
       this._handleClose();
     }
+  },
+  beforeDestroy () {
+    this.map && this.overlay && this.map.removeOverlay(this.overlay);
   }
 };
 </script>

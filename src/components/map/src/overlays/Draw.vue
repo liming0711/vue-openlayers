@@ -1,15 +1,21 @@
 <script>
-import common from '../mixins/common';
+import ready from '../mixins/ready';
 import render from '../mixins/render';
+import destroy from '../mixins/destroy';
 
 const WIDTH = 3;
-const TYPE_LIST = ['Rectangle', 'Square', 'Circle', 'Ellipse', 'Point', 'LineString', 'Polygon'];
+const TYPE_LIST = ['Rectangle', 'Square', 'Circle', 'LineString', 'Polygon']; // 'Ellipse', 'Point',
 
 export default {
   name: 'OlDraw',
   render () { return false; },
-  mixins: [common, render],
+  mixins: [ready, render, destroy],
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
+    name: String,
     type: String,
     drawStyle: [Array, Object],
     maxPoints: {

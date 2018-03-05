@@ -1,16 +1,20 @@
 <script>
-// TODO 添加点击事件和悬停事件
-// TODO 支持 zIndex 自定制
-import common from '../mixins/common';
+import ready from '../mixins/ready';
 import reload from '../mixins/reload';
+import destroy from '../mixins/destroy';
 
 const TYPE = 'image';
 
 export default {
   name: 'OlImage',
   render () { return false; },
-  mixins: [common, reload],
+  mixins: [ready, reload, destroy],
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
+    name: String,
     data: {
       type: String,
       required: true

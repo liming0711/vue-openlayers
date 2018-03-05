@@ -9,6 +9,8 @@
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
+      <ol-control-graticule :target="controlTarget"></ol-control-graticule>
+      <!-- <ol-control-button class="menu menu5"></ol-control-button> -->
       <ol-marker
         :data="fire"
         :vid="'fire'"
@@ -91,19 +93,20 @@
         <option value="Square">Square</option>
         <option value="Rectangle">Rectangle</option>
         <option value="Circle">Circle</option>
-        <option value="Point">Point</option>
+        <!-- <option value="Point">Point</option> -->
         <option value="LineString">LineString</option>
         <option value="Polygon">Polygon</option>
-        <option value="Ellipse">Ellipse</option>
+        <!-- <option value="Ellipse">Ellipse</option> -->
       </select>
       <button @click="clearDrawSource">清空画板</button>
     </div>
-    <div class="menu menu3">
+    <div class="menu menu3" ref="menu3">
       <button @click="switchTile">切换地图</button>
     </div>
     <div class="menu menu4">
       <button @click="clearMapOverlays">清除地图覆盖物</button>
     </div>
+    <div class="menu menu5" ref="menu5"></div>
     <div class="lonlat">经纬度：{{ lonlat }}
       <div id="test"></div>
     </div>
@@ -152,7 +155,8 @@ export default {
       radarImg: '',
       radarBbox: [],
       overlayPosition: [],
-      overlayInfoObj: {}
+      overlayInfoObj: {},
+      controlTarget: this.$refs.menu3
     };
   },
   created () {
@@ -325,7 +329,7 @@ export default {
       console.log(' ----------- hover leave line --------->', val);
     },
     clearMapOverlays () {
-      this.$refs.map.clearOverlays();
+      this.$refs.map.clearOverlays([], ['overlay']);
     }
   }
 };
@@ -367,6 +371,11 @@ html, body {
 .menu4 {
   left: 110px;
   bottom: 86px;
+}
+.menu5 {
+  left: 540px;
+  bottom: 86px;
+  background-color: #fff;
 }
 .lonlat {
   position: absolute;

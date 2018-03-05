@@ -1,17 +1,23 @@
 <script>
 import { createVectorStyle } from '../utils/style';
 import { isEmptyObject } from '../utils/util';
-import common from '../mixins/common';
+import ready from '../mixins/ready';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
+import destroy from '../mixins/destroy';
 
 const TYPE = 'vector';
 
 export default {
   name: 'OlVector',
   render () { return false; },
-  mixins: [common, render, reload],
+  mixins: [ready, render, reload, destroy],
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
+    name: String,
     data: {
       type: Object,
       required: true

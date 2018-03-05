@@ -1,5 +1,6 @@
 <script>
-import common from '../mixins/common';
+import ready from '../mixins/ready';
+import destroy from '../mixins/destroy';
 
 const TYPE = 'tile';
 const defaultXYZ = 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}';
@@ -7,8 +8,13 @@ const defaultXYZ = 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPur
 export default {
   name: 'OlTile',
   render () { return false; },
-  mixins: [common],
+  mixins: [ready, destroy],
   props: {
+    vid: {
+      type: String,
+      required: true
+    },
+    name: String,
     XYZ: {
       type: String,
       default: defaultXYZ
