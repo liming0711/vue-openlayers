@@ -1,5 +1,5 @@
 <script>
-import button from './button';
+import button from '../mixins/control/button';
 
 export default {
   name: 'OlControlGraticule',
@@ -36,6 +36,7 @@ export default {
       graticule.setMap(this.map);
     },
     _getGraticule () {
+      console.log('------- 009 --------', this.ol);
       return new this.ol.Graticule({
         maxLines: this.maxLines,
         strokeStyle: this.strokeStyle || new this.ol.style.Stroke({

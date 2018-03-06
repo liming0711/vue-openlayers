@@ -35,15 +35,15 @@ export default {
   watch: {
     counter (newCounter) {
       if (newCounter === this.childrenNum) {
-        console.log(' -------555 ----->', this.$children);
         this._load();
       }
     }
   },
   mounted () {
     this.childrenNum = this.$children.length;
-    const map = getParent(this.$parent).map;
-    map ? this.ready() : this.$parent.$on('ready', this.ready);
+    const $parent = getParent(this.$parent);
+    const map = $parent.map;
+    map ? this.ready() : $parent.$on('ready', this.ready);
   },
   methods: {
     ready () {

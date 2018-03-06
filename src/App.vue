@@ -9,18 +9,18 @@
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
-      <!-- <ol-control-button
-        :customClass="'ol-control-button-circle'"
-        :title="'画圆'"
-        :innerHtml="'圆'"
-        :clickEvent="drawControl"></ol-control-button>
-      <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule> -->
       <ol-control-bar :customClass="'ol-control-bar-test'">
         <ol-control-button
           :customClass="'ol-control-button-test'"
           :clickEvent="testBarControl">
         </ol-control-button>
+        <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule>
       </ol-control-bar>
+      <ol-control-button
+        :customClass="'ol-control-button-circle'"
+        :title="'画圆'"
+        :innerHtml="'圆'"
+        :clickEvent="drawControl"></ol-control-button>
       <ol-marker
         :data="fire"
         :vid="'fire'"

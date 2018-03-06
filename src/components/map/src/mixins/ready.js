@@ -2,13 +2,15 @@ import { getParent } from '../utils/util';
 
 export default {
   mounted () {
-    const map = getParent(this.$parent).map;
-    map ? this.ready() : this.$parent.$on('ready', this.ready);
+    const $parent = getParent(this.$parent);
+    const map = $parent.map;
+    map ? this.ready() : $parent.$on('ready', this.ready);
   },
   methods: {
     ready () {
-      this.map = this.$parent.map;
-      this.ol = this.$parent.ol;
+      const $parent = getParent(this.$parent);
+      this.map = $parent.map;
+      this.ol = $parent.ol;
       this._load();
     }
   }
