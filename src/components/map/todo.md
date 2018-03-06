@@ -1,8 +1,10 @@
 - control
+- 清空画板有bug，不只是清除不了 point 的 bug
 - 测距离、侧面积
 - hover、 click 或其他事件的时候需要额外的样式，各 overlays 可接受两个的样式，一个渲染的时候，一个其他事件触发
 - 各 overlays 的默认样式需要调整
 - 各组件其他配置参数支持按文档以 Object 形式传递
+- 台风、流场图
 - 各 feature 的 attr 属性需要删除，仅做调试用
 - line arrow
 - 点击之后通过经纬度去高德查询地址
@@ -13,3 +15,4 @@
 - Draw 的椭圆参数
 - heatmap layer
 - draw point 有bug，无法清除 => 暂时不支持 point
+- controls: 切换地图、显示边界、显示地图网格、测算面积和距离、屏幕截图、邮票图、单点、画规则或不规则图形、切换投影

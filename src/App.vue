@@ -9,8 +9,18 @@
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
-      <ol-control-graticule :target="controlTarget"></ol-control-graticule>
-      <!-- <ol-control-button class="menu menu5"></ol-control-button> -->
+      <!-- <ol-control-button
+        :customClass="'ol-control-button-circle'"
+        :title="'画圆'"
+        :innerHtml="'圆'"
+        :clickEvent="drawControl"></ol-control-button>
+      <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule> -->
+      <ol-control-bar :customClass="'ol-control-bar-test'">
+        <ol-control-button
+          :customClass="'ol-control-button-test'"
+          :clickEvent="testBarControl">
+        </ol-control-button>
+      </ol-control-bar>
       <ol-marker
         :data="fire"
         :vid="'fire'"
@@ -75,6 +85,9 @@
         </ul>
       </ol-overlay>
     </ol-map>
+    <div class="lonlat">经纬度：{{ lonlat }}
+      <div id="test"></div>
+    </div>
     <div class="menu menu1">
       <button @click="getHumidity">湿度（Marker）</button>
       <button @click="getFire">火点🔥（Marker）</button>
@@ -100,16 +113,13 @@
       </select>
       <button @click="clearDrawSource">清空画板</button>
     </div>
-    <div class="menu menu3" ref="menu3">
+    <div class="menu menu3">
       <button @click="switchTile">切换地图</button>
     </div>
     <div class="menu menu4">
       <button @click="clearMapOverlays">清除地图覆盖物</button>
     </div>
     <div class="menu menu5" ref="menu5"></div>
-    <div class="lonlat">经纬度：{{ lonlat }}
-      <div id="test"></div>
-    </div>
   </div>
 </template>
 
@@ -156,13 +166,22 @@ export default {
       radarBbox: [],
       overlayPosition: [],
       overlayInfoObj: {},
-      controlTarget: this.$refs.menu3
+      drawControl: this.drawCtrlFunc,
+      testBarControl: this.testCtrlFunc
+      // graticuleControl: this.graticuleCtrlFunc
     };
   },
   created () {
     this.getFire();
   },
   methods: {
+    // 不要在 data 里面直接定义 function，否则作用域 this 无法传递
+    drawCtrlFunc () {
+      this.drawType = 'Circle';
+    },
+    testCtrlFunc () {
+      console.log('------------ test ----------');
+    },
     getRandomColor () {
       var color = '#';
       for (var i = 0; i < 6; i++) {
@@ -387,5 +406,17 @@ html, body {
 }
 .custom-overlay {
   width: 300px;
+}
+.ol-control-button-circle {
+  top: 0;
+  left: 300px;
+}
+.ol-control-graticule {
+  top: 0;
+  left: 350px;
+}
+.ol-control-bar-test {
+  top: 0;
+  left: 40px;
 }
 </style>

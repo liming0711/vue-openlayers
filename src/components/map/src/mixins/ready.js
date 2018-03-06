@@ -1,4 +1,4 @@
-const getParent = $component => $component.abstract ? getParent($component.$parent) : $component;
+import { getParent } from '../utils/util';
 
 export default {
   mounted () {

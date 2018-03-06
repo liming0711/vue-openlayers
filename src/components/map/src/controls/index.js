@@ -1,4 +1,5 @@
-import OlControlGraticule from './graticule';
+import OlControlBar from './bar';
 import OlControlButton from './button';
+import OlControlGraticule from './graticule';
 
-export default { OlControlGraticule, OlControlButton };
+export default { OlControlBar, OlControlButton, OlControlGraticule };

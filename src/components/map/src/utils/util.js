@@ -15,3 +15,5 @@ export const isEmptyObject = function (obj) {
 export const getDataType = data => {
   return class2type[toString.call(data)];
 };
+
+export const getParent = $component => $component.abstract ? getParent($component.$parent) : $component; // TODO check
