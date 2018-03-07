@@ -70,7 +70,7 @@ export default {
       features.attr = data;
       features.set('attr', data);
       features.set('vid', this.vid);
-      features.setStyle(this._getStyle());
+      features.set('style', this._getStyle());
 
       return [features];
     },

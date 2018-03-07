@@ -19,7 +19,7 @@ let basicIconStyle = function (ol, options) {
     anchorXUnits: 'pixels',
     anchorYUnits: 'pixels',
     color: options.color,
-    rotation: options.rotation * Math.PI / 180, // rotation 为弧度，不是角度，角度转弧度公式：角度 * Math.PI / 180
+    rotation: options.rotation, // rotation 为弧度，不是角度，角度转弧度公式：角度 * Math.PI / 180
     opacity: 1,
     scale: options.scale
   });

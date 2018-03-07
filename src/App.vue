@@ -17,9 +17,9 @@
         <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule>
       </ol-control-bar>
       <ol-control-button
-        :customClass="'ol-control-button-circle'"
-        :title="'画圆'"
-        :innerHtml="'圆'"
+        :customClass="'ol-control-button-rectangle'"
+        :title="'画矩形'"
+        :innerHtml="'矩'"
         :clickEvent="drawControl"></ol-control-button>
       <ol-marker
         :data="fire"
@@ -67,7 +67,7 @@
       <ol-draw
         :type="drawType"
         :vid="'draw'"
-        :opacity="0.5"
+        measureDistance
         @enter="handleDrawEnter"
         @leave="handleDrawLeave"
         @singleclick="handleDrawSingleclick"
@@ -177,7 +177,7 @@ export default {
   methods: {
     // 不要在 data 里面直接定义 function，否则作用域 this 无法传递
     drawCtrlFunc () {
-      this.drawType = 'Circle';
+      this.drawType = 'Rectangle';
     },
     testCtrlFunc () {
       console.log('------------ test ----------');
@@ -407,14 +407,14 @@ html, body {
 .custom-overlay {
   width: 300px;
 }
-.ol-control-button-circle {
+.ol-control-button-rectangle {
   top: 0;
   left: 300px;
 }
-.ol-control-graticule {
+/* .ol-control-graticule {
   top: 0;
   left: 350px;
-}
+} */
 .ol-control-bar-test {
   top: 0;
   left: 40px;

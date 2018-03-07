@@ -19,7 +19,7 @@ export default {
         feature.attr = val;
         feature.set('attr', val);
         feature.set('vid', this.vid);
-        feature.setStyle(this._getStyle(val));
+        feature.set('style', this._getStyle(val));
         features.push(feature);
       });
 

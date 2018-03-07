@@ -30,6 +30,8 @@ export default {
       type: Number,
       default: 5
     },
+    measureDistance: Boolean,
+    measureArea: Boolean,
     massClear: {
       type: Boolean,
       default: true
@@ -40,7 +42,17 @@ export default {
       drawInteraction: null,
       layer: null,
       active: false,
-      lastType: ''
+      lastType: '',
+      sketchListener: null,
+      sketch: null, // @type {ol.Feature} Currently drawn feature.
+      helpTooltipElement: null, // The help tooltip element
+      helpTooltip: null, // Overlay to show the help messages
+      measureTooltipElement: null, // The measure tooltip element
+      measureTooltip: null, // Overlay to show the measurement
+      continuePolygonMsg: '点击继续绘制多边形',
+      continueLineMsg: '点击继续绘制折线',
+      interactionTimer: null,
+      measureTooltipList: []
     };
   },
   watch: {
@@ -61,10 +73,24 @@ export default {
         this.lastType = newType;
       }
     },
-    active (newActive, oldActive) {
-      if (newActive !== oldActive) {
-        this.$parent.drawEnable = newActive;
-        this.drawInteraction && this.drawInteraction.setActive(newActive);
+    active (newActive) {
+      this.$parent.drawEnable = newActive;
+      this.drawInteraction && this.drawInteraction.setActive(newActive);
+    },
+    measureDistance (nb) {
+      if (nb) {
+        this.map.on('pointermove', this._pointerMoveHandler);
+        this._createMeasureTooltip();
+        this._createHelpTooltip();
+      } else {
+        this.map.un('pointermove', this._pointerMoveHandler);
+      }
+    },
+    measureArea (nb) {
+      if (nb) {
+        this.map.on('pointermove', this._pointerMoveHandler);
+      } else {
+        this.map.un('pointermove', this._pointerMoveHandler);
       }
     }
   },
@@ -80,7 +106,7 @@ export default {
         }
       }
 
-      this.render('draw', new this.ol.source.Vector({ crossOrigin: 'anonymous' }));
+      this.render('draw', new this.ol.source.Vector({ crossOrigin: 'anonymous' }), this._getStyle());
 
       this._addInteraction();
     },
@@ -145,22 +171,198 @@ export default {
         maxPoints: this.maxPoints
       });
       this.map.addInteraction(this.drawInteraction);
+      if (this.measureDistance || this.measureArea) {
+        this.map.on('pointermove', this._pointerMoveHandler);
+        this._createMeasureTooltip();
+        this._createHelpTooltip();
+      }
       this._registerEvents();
       this.active = true;
     },
     _registerEvents () {
-      this.drawInteraction.on('drawstart', (e) => {
+      let drawStartBasicEventListener = this.drawInteraction.on('drawstart', (e) => {
         e.feature.set('vid', this.vid);
-        e.feature.setStyle(this._getStyle());
+        e.feature.set('style', this._getStyle());
+        this.mapComponent.click.setActive(false);
+        this.mapComponent.hover.setActive(false);
         this.$emit('drawstart', e);
       });
-      this.drawInteraction.on('drawend', (e) => {
+      let drawEndBasicEventListener = this.drawInteraction.on('drawend', (e) => {
         this.$emit('drawend', e);
+        this.interactionTimer = setTimeout(() => {
+          this.mapComponent.click.setActive(true);
+          this.mapComponent.hover.setActive(true);
+        }, 500);
       });
+      if (this.measureDistance || this.measureArea) {
+        let drawStartMeasureEventListener = this.drawInteraction.on('drawstart', (evt) => {
+          this.sketch = evt.feature;
+
+          var tooltipCoord = evt.coordinate;
+
+          this.sketchListener = this.sketch.getGeometry().on('change', (evt) => {
+            var geom = evt.target;
+            var output;
+            if (geom instanceof this.ol.geom.Polygon) {
+              output = this._formatArea(geom);
+              tooltipCoord = geom.getInteriorPoint().getCoordinates();
+            } else if (geom instanceof this.ol.geom.LineString) {
+              output = this._formatLength(geom);
+              tooltipCoord = geom.getLastCoordinate();
+            }
+            this.measureTooltipElement.innerHTML = output;
+            this.measureTooltip.setPosition(tooltipCoord);
+          });
+        }, this);
+
+        let drawEndMeasureEventListener = this.drawInteraction.on('drawend', () => {
+          this.measureTooltipElement.className = 'tooltip tooltip-static';
+          this.measureTooltip.setOffset([0, -7]);
+          // unset sketch
+          this.sketch = null;
+          // unset tooltip so that a new one can be created
+          this.measureTooltipElement = null;
+          this._createMeasureTooltip();
+          this.ol.Observable.unByKey(this.sketchListener);
+        }, this);
+        console.log('---------- Measure event -----------', drawStartMeasureEventListener, drawEndMeasureEventListener);
+      }
+      console.log('---------- Basic event -----------', drawStartBasicEventListener, drawEndBasicEventListener);
+      this.map.getViewport().addEventListener('mouseout', () => {
+        this.helpTooltipElement.classList.add('hidden');
+      });
+    },
+    _pointerMoveHandler (event) {
+      if (event.dragging) {
+        return;
+      }
+      var helpMsg = '点击开始绘制';
+
+      if (this.sketch) {
+        var geom = (this.sketch.getGeometry());
+        if (geom instanceof this.ol.geom.Polygon) {
+          helpMsg = this.continuePolygonMsg;
+        } else if (geom instanceof this.ol.geom.LineString) {
+          helpMsg = this.continueLineMsg;
+        }
+      }
+
+      this.helpTooltipElement.innerHTML = helpMsg;
+      this.helpTooltip.setPosition(event.coordinate);
+
+      this.helpTooltipElement.classList.remove('hidden');
+    },
+    _formatLength (line) {
+      var length = this.ol.Sphere.getLength(line);
+      var output;
+      if (length > 100) {
+        output = `${Math.round(length / 1000 * 100) / 100} km`;
+      } else {
+        output = `${Math.round(length * 100) / 100} m`;
+      }
+      return output;
+    },
+    _formatArea (polygon) {
+      var area = this.ol.Sphere.getArea(polygon);
+      var output;
+      if (area > 10000) {
+        output = `${Math.round(area / 1000000 * 100) / 100} km<sup>2</sup>`;
+      } else {
+        output = `${Math.round(area * 100) / 100} m<sup>2</sup>`;
+      }
+      return output;
+    },
+    _createMeasureTooltip () {
+      if (this.measureTooltipElement) {
+        this.measureTooltipElement.parentNode.removeChild(this.measureTooltipElement);
+      }
+      this.measureTooltipElement = document.createElement('div');
+      this.measureTooltipElement.className = 'tooltip tooltip-measure';
+      this.measureTooltip = new this.ol.Overlay({
+        element: this.measureTooltipElement,
+        offset: [0, -15],
+        positioning: 'bottom-center'
+      });
+      this.measureTooltip.set('massClear', true);
+      this.map.addOverlay(this.measureTooltip);
+      this.measureTooltipList.push(this.measureTooltip);
+    },
+    _createHelpTooltip () {
+      if (this.helpTooltipElement) {
+        this.helpTooltipElement.parentNode.removeChild(this.helpTooltipElement);
+      }
+      this.helpTooltipElement = document.createElement('div');
+      this.helpTooltipElement.className = 'tooltip hidden';
+      this.helpTooltip = new this.ol.Overlay({
+        element: this.helpTooltipElement,
+        offset: [15, 0],
+        positioning: 'center-left'
+      });
+      this.helpTooltip.set('massClear', true);
+      this.map.addOverlay(this.helpTooltip);
     },
     clearDrawSource () {
       this.layer.getSource().clear();
+      this.measureTooltipList.forEach(overlay => {
+        this.map.removeOverlay(overlay);
+      });
+      this.map.removeOverlay(this.helpTooltip);
     }
+  },
+  beforeDestroy () {
+    clearTimeout(this.interactionTimer);
   }
 };
 </script>
+<style>
+.tooltip {
+  position: relative;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  color: white;
+  padding: 4px 8px;
+  opacity: 0.7;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tooltip-measure {
+  opacity: 1;
+  font-weight: bold;
+}
+.tooltip-static {
+  background-color: #ffcc33;
+  color: black;
+  border: 1px solid white;
+}
+.tooltip:before,
+.tooltip:after {
+  content: " ";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  height: 0;
+  width: 0;
+  border: solid transparent;
+  pointer-events: none;
+}
+.tooltip-measure:before,
+.tooltip-static:before {
+  border-color: transparent;
+  border-top-color: rgba(0, 0, 0, 0.3);
+  border-width: 6px;
+  margin-left: -6px;
+}
+.tooltip-measure:after,
+.tooltip-static:after {
+  border-color: transparent;
+  border-top-color: rgba(0, 0, 0, 0.3);
+  border-width: 5px;
+  margin-left: -5px;
+}
+.tooltip-static:before {
+  border-top-color: #fff;
+}
+.tooltip-static:after {
+  border-top-color: #ffcc33;
+}
+</style>

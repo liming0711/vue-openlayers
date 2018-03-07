@@ -92,7 +92,7 @@ export default {
         feature.attr = data;
         feature.set('attr', data);
         feature.set('vid', this.vid);
-        feature.setStyle(this._getStyle(feature));
+        feature.set('style', this._getStyle(feature));
       });
       return features;
     },

@@ -207,7 +207,7 @@ export default {
     _addClickInteraction () {
       this.click = new this.ol.interaction.Select({
         style: (feature) => {
-          return this._getSingleFeature(feature).getStyle();
+          return this._getSingleFeature(feature).get('style');
         }
       });
       this.map.addInteraction(this.click);
@@ -226,7 +226,7 @@ export default {
       this.hover = new this.ol.interaction.Select({
         condition: this.ol.events.condition.pointerMove,
         style: (feature) => {
-          return this._getSingleFeature(feature).getStyle();
+          return this._getSingleFeature(feature).get('style');
         }
       });
       this.map.addInteraction(this.hover);
@@ -276,6 +276,7 @@ export default {
           };
         })(), 16.7);
       });
+      // this.map.getOverlays().clear();
       this.map.getOverlays().getArray().forEach(overlay => {
         setTimeout((() => {
           return () => {

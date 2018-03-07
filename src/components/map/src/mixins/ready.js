@@ -11,6 +11,7 @@ export default {
       const $parent = getParent(this.$parent);
       this.map = $parent.map;
       this.ol = $parent.ol;
+      this.mapComponent = $parent;
       this._load();
     }
   }

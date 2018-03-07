@@ -7,7 +7,7 @@ export default {
   },
   mixins: [feature],
   methods: {
-    render (type, source) {
+    render (type, source, style) {
       this.layer = new this.ol.layer.Vector({
         id: this.vid,
         name: this.name,
@@ -15,7 +15,7 @@ export default {
         massClear: this.massClear,
         source: source,
         opacity: this.opacity,
-        style: feature => { return this._getSingleFeature(feature).getStyle(); },
+        style: style || (feature => { return this._getSingleFeature(feature).get('style'); }),
         zIndex: this.zIndex
       });
       this.map.addLayer(this.layer);
