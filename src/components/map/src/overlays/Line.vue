@@ -3,7 +3,7 @@ import { createLineStyle } from '../utils/style';
 import ready from '../mixins/ready';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'line';
 
@@ -11,7 +11,7 @@ export default {
   // TODO 增加支持描边
   name: 'OlLine',
   render () { return false; },
-  mixins: [ready, render, reload, destroy],
+  mixins: [ready, render, reload, beforeDestroy],
   props: {
     vid: {
       type: String,

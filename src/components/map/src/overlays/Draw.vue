@@ -1,15 +1,16 @@
 <script>
 import ready from '../mixins/ready';
 import render from '../mixins/render';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
+const TYPE = 'draw';
 const WIDTH = 3;
-const TYPE_LIST = ['Rectangle', 'Square', 'Circle', 'LineString', 'Polygon']; // 'Ellipse', 'Point',
+const DRAW_TYPE_LIST = ['Point', 'Rectangle', 'Square', 'Circle', 'LineString', 'Polygon']; // 'Ellipse'
 
 export default {
   name: 'OlDraw',
   render () { return false; },
-  mixins: [ready, render, destroy],
+  mixins: [ready, render, beforeDestroy],
   props: {
     vid: {
       type: String,
@@ -30,8 +31,7 @@ export default {
       type: Number,
       default: 5
     },
-    measureDistance: Boolean,
-    measureArea: Boolean,
+    measure: Boolean,
     massClear: {
       type: Boolean,
       default: true
@@ -52,14 +52,15 @@ export default {
       continuePolygonMsg: '点击继续绘制多边形',
       continueLineMsg: '点击继续绘制折线',
       interactionTimer: null,
-      measureTooltipList: []
+      measureTooltipList: [],
+      measureInited: false
     };
   },
   watch: {
-    type (newType, oldType) {
+    type (newType) {
       // 空字符串关闭画图功能，但是保留已经画好的图
       // 其他非 typeList 内的元素一律清空 source 并 removeLayer
-      if (TYPE_LIST.indexOf(newType) < 0) {
+      if (DRAW_TYPE_LIST.indexOf(newType) < 0) {
         if (newType !== '') {
           this.clearDrawSource();
           this.map.removeLayer(this.drawLayer);
@@ -77,20 +78,11 @@ export default {
       this.$parent.drawEnable = newActive;
       this.drawInteraction && this.drawInteraction.setActive(newActive);
     },
-    measureDistance (nb) {
+    measure (nb) {
       if (nb) {
-        this.map.on('pointermove', this._pointerMoveHandler);
-        this._createMeasureTooltip();
-        this._createHelpTooltip();
+        this._initMeasure();
       } else {
-        this.map.un('pointermove', this._pointerMoveHandler);
-      }
-    },
-    measureArea (nb) {
-      if (nb) {
-        this.map.on('pointermove', this._pointerMoveHandler);
-      } else {
-        this.map.un('pointermove', this._pointerMoveHandler);
+        this._uninitMeasure();
       }
     }
   },
@@ -101,18 +93,19 @@ export default {
         this._addInteraction();
         return false;
       } else {
-        if (TYPE_LIST.indexOf(this.type) < 0) {
+        if (DRAW_TYPE_LIST.indexOf(this.type) < 0) {
           return false;
         }
       }
 
-      this.render('draw', new this.ol.source.Vector({ crossOrigin: 'anonymous' }), this._getStyle());
+      this.render(TYPE, new this.ol.source.Vector({ crossOrigin: 'anonymous' }), this._getStyle());
 
       this._addInteraction();
     },
     _getInteractionType () {
       let type = this.type;
-      if (this.type === 'Square' || this.type === 'Rectangle' || this.type === 'Ellipse') {
+      if (!type) { return undefined; }
+      if (type === 'Square' || type === 'Rectangle' || type === 'Ellipse') {
         type = 'Circle';
       }
       return type;
@@ -171,75 +164,88 @@ export default {
         maxPoints: this.maxPoints
       });
       this.map.addInteraction(this.drawInteraction);
-      if (this.measureDistance || this.measureArea) {
-        this.map.on('pointermove', this._pointerMoveHandler);
-        this._createMeasureTooltip();
-        this._createHelpTooltip();
+      if (this.measure) {
+        this._initMeasure();
       }
       this._registerEvents();
       this.active = true;
     },
+    _initMeasure () {
+      this.map.on('pointermove', this._pointerMoveHandler);
+      this.drawInteraction.on('drawstart', this._drawStartMeasureEventListener);
+      this.drawInteraction.on('drawend', this._drawEndMeasureEventListener);
+      this.map.getViewport().addEventListener('mouseout', this._viewportEventListener);
+      this._createMeasureTooltip();
+      this._createHelpTooltip();
+      this.measureInited = true;
+    },
+    _uninitMeasure () {
+      this.map.un('pointermove', this._pointerMoveHandler);
+      this.drawInteraction.un('drawstart', this._drawStartMeasureEventListener);
+      this.drawInteraction.un('drawend', this._drawEndMeasureEventListener);
+      this.map.getViewport().removeEventListener('mouseout', this._viewportEventListener);
+      this.sketch = null;
+      this.measureTooltipElement = null;
+      this.helpTooltipElement = null;
+      this.helpTooltip.setPosition(undefined);
+      this.ol.Observable.unByKey(this.sketchListener);
+      this.measureInited = false;
+    },
     _registerEvents () {
-      let drawStartBasicEventListener = this.drawInteraction.on('drawstart', (e) => {
-        e.feature.set('vid', this.vid);
-        e.feature.set('style', this._getStyle());
-        this.mapComponent.click.setActive(false);
-        this.mapComponent.hover.setActive(false);
-        this.$emit('drawstart', e);
-      });
-      let drawEndBasicEventListener = this.drawInteraction.on('drawend', (e) => {
-        this.$emit('drawend', e);
-        this.interactionTimer = setTimeout(() => {
-          this.mapComponent.click.setActive(true);
-          this.mapComponent.hover.setActive(true);
-        }, 500);
-      });
-      if (this.measureDistance || this.measureArea) {
-        let drawStartMeasureEventListener = this.drawInteraction.on('drawstart', (evt) => {
-          this.sketch = evt.feature;
+      this.drawInteraction.on('drawstart', this._drawStartBasicEventListener, this);
+      this.drawInteraction.on('drawend', this._drawEndBasicEventListener, this);
+    },
+    _viewportEventListener () {
+      this.helpTooltipElement.classList.add('hidden');
+    },
+    _drawStartBasicEventListener (e) {
+      e.feature.set('vid', this.vid);
+      e.feature.set('style', this._getStyle());
+      this.mapComponent.click.setActive(false);
+      this.mapComponent.hover.setActive(false);
+      this.$emit('drawstart', e);
+    },
+    _drawEndBasicEventListener (e) {
+      this.$emit('drawend', e);
+      this.interactionTimer = setTimeout(() => {
+        this.mapComponent.click.setActive(true);
+        this.mapComponent.hover.setActive(true);
+      }, 500);
+    },
+    _drawStartMeasureEventListener (evt) {
+      this.sketch = evt.feature;
 
-          var tooltipCoord = evt.coordinate;
+      var tooltipCoord = evt.coordinate;
 
-          this.sketchListener = this.sketch.getGeometry().on('change', (evt) => {
-            var geom = evt.target;
-            var output;
-            if (geom instanceof this.ol.geom.Polygon) {
-              output = this._formatArea(geom);
-              tooltipCoord = geom.getInteriorPoint().getCoordinates();
-            } else if (geom instanceof this.ol.geom.LineString) {
-              output = this._formatLength(geom);
-              tooltipCoord = geom.getLastCoordinate();
-            }
-            this.measureTooltipElement.innerHTML = output;
-            this.measureTooltip.setPosition(tooltipCoord);
-          });
-        }, this);
-
-        let drawEndMeasureEventListener = this.drawInteraction.on('drawend', () => {
-          this.measureTooltipElement.className = 'tooltip tooltip-static';
-          this.measureTooltip.setOffset([0, -7]);
-          // unset sketch
-          this.sketch = null;
-          // unset tooltip so that a new one can be created
-          this.measureTooltipElement = null;
-          this._createMeasureTooltip();
-          this.ol.Observable.unByKey(this.sketchListener);
-        }, this);
-        console.log('---------- Measure event -----------', drawStartMeasureEventListener, drawEndMeasureEventListener);
-      }
-      console.log('---------- Basic event -----------', drawStartBasicEventListener, drawEndBasicEventListener);
-      this.map.getViewport().addEventListener('mouseout', () => {
-        this.helpTooltipElement.classList.add('hidden');
+      this.sketchListener = this.sketch.getGeometry().on('change', (evt) => {
+        var geom = evt.target;
+        var output;
+        if (geom instanceof this.ol.geom.Polygon) {
+          output = this._formatArea(geom);
+          tooltipCoord = geom.getInteriorPoint().getCoordinates();
+        } else if (geom instanceof this.ol.geom.LineString) {
+          output = this._formatLength(geom);
+          tooltipCoord = geom.getLastCoordinate();
+        }
+        this.measureTooltipElement.innerHTML = output;
+        this.measureTooltip.setPosition(tooltipCoord);
       });
     },
-    _pointerMoveHandler (event) {
-      if (event.dragging) {
+    _drawEndMeasureEventListener (evt) {
+      this.measureTooltipElement.className = 'tooltip tooltip-static';
+      this.measureTooltip.setOffset([0, -7]);
+      this.sketch = null; // unset sketch
+      this.measureTooltipElement = null; // unset tooltip so that a new one can be created
+      this._createMeasureTooltip();
+      this.ol.Observable.unByKey(this.sketchListener);
+    },
+    _pointerMoveHandler (evt) {
+      if (evt.dragging) {
         return;
       }
       var helpMsg = '点击开始绘制';
-
       if (this.sketch) {
-        var geom = (this.sketch.getGeometry());
+        var geom = this.sketch.getGeometry();
         if (geom instanceof this.ol.geom.Polygon) {
           helpMsg = this.continuePolygonMsg;
         } else if (geom instanceof this.ol.geom.LineString) {
@@ -248,7 +254,7 @@ export default {
       }
 
       this.helpTooltipElement.innerHTML = helpMsg;
-      this.helpTooltip.setPosition(event.coordinate);
+      this.helpTooltip.setPosition(evt.coordinate);
 
       this.helpTooltipElement.classList.remove('hidden');
     },
@@ -301,15 +307,23 @@ export default {
       this.helpTooltip.set('massClear', true);
       this.map.addOverlay(this.helpTooltip);
     },
-    clearDrawSource () {
-      this.layer.getSource().clear();
+    clearMeasureOverlay () {
       this.measureTooltipList.forEach(overlay => {
         this.map.removeOverlay(overlay);
       });
       this.map.removeOverlay(this.helpTooltip);
+      if (this.measure) {
+        this._createMeasureTooltip();
+        this._createHelpTooltip();
+      }
+    },
+    clearSource () {
+      this.layer.getSource().clear();
     }
   },
   beforeDestroy () {
+    this.clearSource();
+    this.clearMeasureOverlay();
     clearTimeout(this.interactionTimer);
   }
 };

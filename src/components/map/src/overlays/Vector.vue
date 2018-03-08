@@ -4,14 +4,14 @@ import { isEmptyObject } from '../utils/util';
 import ready from '../mixins/ready';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'vector';
 
 export default {
   name: 'OlVector',
   render () { return false; },
-  mixins: [ready, render, reload, destroy],
+  mixins: [ready, render, reload, beforeDestroy],
   props: {
     vid: {
       type: String,

@@ -4,12 +4,12 @@ import ready from '../mixins/ready';
 import render from '../mixins/render';
 import reload from '../mixins/reload';
 import point from '../mixins/point';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 export default {
   name: 'OlText',
   render () { return false; },
-  mixins: [ready, render, point, reload, destroy],
+  mixins: [ready, render, point, reload, beforeDestroy],
   props: {
     vid: {
       type: String,

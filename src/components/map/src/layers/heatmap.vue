@@ -1,13 +1,13 @@
 <script>
 import ready from '../mixins/ready';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'heatmap';
 
 export default {
   name: 'OlHeatmap',
   render () { return false; },
-  mixins: [ready, destroy],
+  mixins: [ready, beforeDestroy],
   props: {
     vid: {
       type: String,

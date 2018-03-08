@@ -1,14 +1,14 @@
 <script>
 import ready from '../mixins/ready';
 import reload from '../mixins/reload';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'image';
 
 export default {
   name: 'OlImage',
   render () { return false; },
-  mixins: [ready, reload, destroy],
+  mixins: [ready, reload, beforeDestroy],
   props: {
     vid: {
       type: String,

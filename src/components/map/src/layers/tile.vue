@@ -1,6 +1,6 @@
 <script>
 import ready from '../mixins/ready';
-import destroy from '../mixins/destroy';
+import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'tile';
 const defaultXYZ = 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}';
@@ -8,7 +8,7 @@ const defaultXYZ = 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPur
 export default {
   name: 'OlTile',
   render () { return false; },
-  mixins: [ready, destroy],
+  mixins: [ready, beforeDestroy],
   props: {
     vid: {
       type: String,

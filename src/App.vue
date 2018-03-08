@@ -67,7 +67,7 @@
       <ol-draw
         :type="drawType"
         :vid="'draw'"
-        measureDistance
+        :measure="measureBoolean"
         @enter="handleDrawEnter"
         @leave="handleDrawLeave"
         @singleclick="handleDrawSingleclick"
@@ -106,7 +106,7 @@
         <option value="Square">Square</option>
         <option value="Rectangle">Rectangle</option>
         <option value="Circle">Circle</option>
-        <!-- <option value="Point">Point</option> -->
+        <option value="Point">Point</option>
         <option value="LineString">LineString</option>
         <option value="Polygon">Polygon</option>
         <!-- <option value="Ellipse">Ellipse</option> -->
@@ -119,7 +119,7 @@
     <div class="menu menu4">
       <button @click="clearMapOverlays">清除地图覆盖物</button>
     </div>
-    <div class="menu menu5" ref="menu5"></div>
+    <div class="menu menu5" @click="changeMeasure">toggle 测量</div>
   </div>
 </template>
 
@@ -167,8 +167,8 @@ export default {
       overlayPosition: [],
       overlayInfoObj: {},
       drawControl: this.drawCtrlFunc,
-      testBarControl: this.testCtrlFunc
-      // graticuleControl: this.graticuleCtrlFunc
+      testBarControl: this.testCtrlFunc,
+      measureBoolean: false
     };
   },
   created () {
@@ -297,7 +297,8 @@ export default {
       this.drawType = this.$refs.type.value;
     },
     clearDrawSource () {
-      this.$refs.draw.clearDrawSource();
+      this.$refs.draw.clearSource();
+      this.$refs.draw.clearMeasureOverlay();
     },
     handleHumidityHoverEnter (val) {
       console.log(' ----------- hover enter humidity --------->', val);
@@ -349,6 +350,9 @@ export default {
     },
     clearMapOverlays () {
       this.$refs.map.clearOverlays([], ['overlay']);
+    },
+    changeMeasure () {
+      this.measureBoolean = !this.measureBoolean;
     }
   }
 };
@@ -392,7 +396,7 @@ html, body {
   bottom: 86px;
 }
 .menu5 {
-  left: 540px;
+  left: 570px;
   bottom: 86px;
   background-color: #fff;
 }
