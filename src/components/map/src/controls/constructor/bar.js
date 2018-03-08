@@ -32,7 +32,6 @@ var Bar = function (options = {}) {
 
   this.map = options.map;
   this.controls_ = [];
-  console.log();
   if (options.controls instanceof Array) {
     for (var i = 0; i < options.controls.length; i++) {
       this.addControl(options.controls[i]);

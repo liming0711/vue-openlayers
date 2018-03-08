@@ -11,7 +11,7 @@ import ol from 'openlayers';
  */
 var Button = function (options = {}) {
   var element = document.createElement('div');
-  element.className = 'ol-unselectable ol-control ol-control-custom';
+  element.className = 'ol-unselectable ol-control ol-control-custom-button';
   if (options.customClass) {
     element.className += ` ${options.customClass}`;
   }

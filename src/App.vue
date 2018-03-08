@@ -9,12 +9,21 @@
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
-      <ol-control-bar :customClass="'ol-control-bar-test'">
+      <!-- <ol-control-bar :customClass="'ol-control-bar-test'">
         <ol-control-button
           :customClass="'ol-control-button-test'"
           :clickEvent="testBarControl">
         </ol-control-button>
         <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule>
+      </ol-control-bar> -->
+      <ol-control-bar :customClass="'ol-control-bar-sub1'">
+        <ol-control-toggle :innerHtml="'1'" :active="true" :onToggle="testToggle"></ol-control-toggle>
+        <!-- <ol-control-toggle :innerHtml="'2'" :autoActive="true" :onToggle="testToggle">
+          <ol-control-bar :customClass="'ol-control-bar-sub2'">
+            <ol-control-button :clickEvent="testBarControl"></ol-control-button>
+            <ol-control-button :clickEvent="testBarControl"></ol-control-button>
+          </ol-control-bar>
+        </ol-control-toggle> -->
       </ol-control-bar>
       <ol-control-button
         :customClass="'ol-control-button-rectangle'"
@@ -168,7 +177,8 @@ export default {
       overlayInfoObj: {},
       drawControl: this.drawCtrlFunc,
       testBarControl: this.testCtrlFunc,
-      measureBoolean: false
+      measureBoolean: false,
+      testToggle: this.testToggleFunc
     };
   },
   created () {
@@ -181,6 +191,9 @@ export default {
     },
     testCtrlFunc () {
       console.log('------------ test ----------');
+    },
+    testToggleFunc () {
+      console.log('------------ toggle test ----------');
     },
     getRandomColor () {
       var color = '#';

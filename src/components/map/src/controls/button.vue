@@ -3,7 +3,6 @@ import button from '../mixins/control/button';
 
 export default {
   name: 'OlControlButton',
-  componentName: 'OlControlButton',
   mixins: [button],
   props: {
     title: String,

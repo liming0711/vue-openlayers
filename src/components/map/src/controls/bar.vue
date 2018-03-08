@@ -3,13 +3,12 @@
 </template>
 
 <script>
-import Bar from './constructor/bar';
+import Bar from './constructor/Bar';
 import ready from '../mixins/ready';
 import { getParent } from '../utils/util';
 
 export default {
   name: 'OlControlBar',
-  componentName: 'OlControlBar',
   render () { return false; },
   mixins: [ready],
   props: {
@@ -40,9 +39,14 @@ export default {
     }
   },
   mounted () {
-    this.childrenNum = this.$children.length;
+    // this.childrenNum = this.$children.length;
     const $parent = getParent(this.$parent);
     const map = $parent.map;
+    this.$children.forEach(child => {
+      if (child.$options.name === 'OlControlToggle' || child.$options.name === 'OlControlButton') {
+        this.childrenNum++;
+      }
+    });
     map ? this.ready() : $parent.$on('ready', this.ready);
   },
   methods: {
@@ -58,6 +62,7 @@ export default {
       this.$children.forEach(child => {
         controls.push(child.control);
       });
+
       this.bar = new Bar({
         map: this.map,
         customClass: this.customClass,

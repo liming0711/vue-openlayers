@@ -1,4 +1,5 @@
 import ol from 'openlayers';
+import Button from './Button';
 import { addClass, removeClass } from '../../utils/dom';
 
 /** A simple toggle control
@@ -27,9 +28,9 @@ var Toggle = function (options = {}) {
     });
   }
 
-  if (options.toggleFn) {
+  if (options.toggleFunc) {
     // compat old version
-    options.onToggle = options.toggleFn;
+    options.onToggle = options.toggleFunc;
   }
   options.handleClick = function () {
     self.toggle();
@@ -37,22 +38,22 @@ var Toggle = function (options = {}) {
       options.onToggle.call(self, self.getActive());
     }
   };
-  options.className = (options.className || '') + ' ol-toggle';
-  ol.control.Button.call(this, options);
+  options.className = (options.customClass || '') + ' ol-control-custom-toggle';
+  Button.call(this, options);
 
   this.set('title', options.title);
 
-  this.set('autoActivate', options.autoActivate);
+  this.set('autoActive', options.autoActive);
   if (options.bar) {
     this.subbar_ = options.bar;
     this.subbar_.setTarget(this.element);
-    this.subbar_.element.className += ' ol-option-bar';
+    this.subbar_.element.className += ' ol-control-custom-option-bar';
   }
 
   this.setActive(options.active);
   // this.setDisable(options.disable);
 };
-ol.inherits(Toggle, ol.control.Button);
+ol.inherits(Toggle, Button);
 
 /**
  * Set the map instance the control is associated with
@@ -114,7 +115,7 @@ Toggle.prototype.getSubBar = function () {
  * @api stable
  */
 Toggle.prototype.getActive = function () {
-  return /ol-active/.test(this.element.className);
+  return /ol-control-custom-active/.test(this.element.className);
 };
 
 /** Toggle control state active/deactive
@@ -127,11 +128,12 @@ Toggle.prototype.toggle = function () {
 * @param {bool} b activate or deactivate the control, default false
 */
 Toggle.prototype.setActive = function (b) {
-  if (this.getActive() === b) return;
+  console.log('------------ active --------------', b);
+  if (this.getActive() === b) { return false; }
   if (b) {
-    addClass(this.element, 'ol-active');
+    addClass(this.element, 'ol-control-custom-active');
   } else {
-    removeClass(this.element, 'ol-active');
+    removeClass(this.element, 'ol-control-custom-active');
   }
   if (this.interaction_) {
     this.interaction_.setActive(b);

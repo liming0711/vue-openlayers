@@ -1,4 +1,4 @@
-import Button from '../../controls/constructor/control';
+import Button from '../../controls/constructor/Button';
 import ready from '../ready';
 
 export default {
@@ -6,7 +6,6 @@ export default {
   mixins: [ready],
   data () {
     return {
-      addToBar: false,
       control: null
     };
   },
