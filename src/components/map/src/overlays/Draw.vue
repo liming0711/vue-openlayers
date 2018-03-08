@@ -52,8 +52,7 @@ export default {
       continuePolygonMsg: '点击继续绘制多边形',
       continueLineMsg: '点击继续绘制折线',
       interactionTimer: null,
-      measureTooltipList: [],
-      measureInited: false
+      measureTooltipList: []
     };
   },
   watch: {
@@ -62,9 +61,11 @@ export default {
       // 其他非 typeList 内的元素一律清空 source 并 removeLayer
       if (DRAW_TYPE_LIST.indexOf(newType) < 0) {
         if (newType !== '') {
-          this.clearDrawSource();
+          this.clearSource();
+          this.clearMeasureOverlay();
           this.map.removeLayer(this.drawLayer);
         }
+        this._uninitMeasure();
         this.active = false;
       } else {
         if (newType !== this.lastType) {
@@ -80,7 +81,11 @@ export default {
     },
     measure (nb) {
       if (nb) {
-        this._initMeasure();
+        if (this.type !== 'Point' && this.type !== 'Circle') {
+          this._initMeasure();
+        } else {
+          throw new Error('测量不支持此种绘制类型');
+        }
       } else {
         this._uninitMeasure();
       }
@@ -177,7 +182,6 @@ export default {
       this.map.getViewport().addEventListener('mouseout', this._viewportEventListener);
       this._createMeasureTooltip();
       this._createHelpTooltip();
-      this.measureInited = true;
     },
     _uninitMeasure () {
       this.map.un('pointermove', this._pointerMoveHandler);
@@ -189,7 +193,6 @@ export default {
       this.helpTooltipElement = null;
       this.helpTooltip.setPosition(undefined);
       this.ol.Observable.unByKey(this.sketchListener);
-      this.measureInited = false;
     },
     _registerEvents () {
       this.drawInteraction.on('drawstart', this._drawStartBasicEventListener, this);
@@ -244,6 +247,7 @@ export default {
         return;
       }
       var helpMsg = '点击开始绘制';
+
       if (this.sketch) {
         var geom = this.sketch.getGeometry();
         if (geom instanceof this.ol.geom.Polygon) {
