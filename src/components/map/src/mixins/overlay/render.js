@@ -1,11 +1,11 @@
-import feature from './feature';
+import { getSingleFeature } from '../../utils/map';
+
 export default {
   data () {
     return {
       layer: null
     };
   },
-  mixins: [feature],
   methods: {
     render (type, source, style) {
       this.layer = new this.ol.layer.Vector({
@@ -15,7 +15,7 @@ export default {
         massClear: this.massClear,
         source: source,
         opacity: this.opacity,
-        style: style || (feature => { return this._getSingleFeature(feature).get('style'); }),
+        style: style || (feature => { return getSingleFeature(feature).get('style'); }),
         zIndex: this.zIndex
       });
       this.map.addLayer(this.layer);

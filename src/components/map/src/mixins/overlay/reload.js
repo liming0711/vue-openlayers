@@ -1,4 +1,4 @@
-import { isEmptyObject, getDataType } from '../utils/util';
+import { isEmptyObject, getDataType } from '../../utils/util';
 
 export default {
   watch: {

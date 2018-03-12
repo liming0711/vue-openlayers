@@ -1,6 +1,6 @@
 <script>
 import ready from '../mixins/ready';
-import render from '../mixins/render';
+import render from '../mixins/overlay/render';
 import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'draw';
@@ -184,15 +184,15 @@ export default {
       this._createHelpTooltip();
     },
     _uninitMeasure () {
-      this.map.un('pointermove', this._pointerMoveHandler);
-      this.drawInteraction.un('drawstart', this._drawStartMeasureEventListener);
-      this.drawInteraction.un('drawend', this._drawEndMeasureEventListener);
-      this.map.getViewport().removeEventListener('mouseout', this._viewportEventListener);
+      this.map && this.map.un('pointermove', this._pointerMoveHandler);
+      this.drawInteraction && this.drawInteraction.un('drawstart', this._drawStartMeasureEventListener);
+      this.drawInteraction && this.drawInteraction.un('drawend', this._drawEndMeasureEventListener);
+      this.map && this.map.getViewport().removeEventListener('mouseout', this._viewportEventListener);
       this.sketch = null;
       this.measureTooltipElement = null;
       this.helpTooltipElement = null;
-      this.helpTooltip.setPosition(undefined);
-      this.ol.Observable.unByKey(this.sketchListener);
+      this.helpTooltip && this.helpTooltip.setPosition(undefined);
+      this.sketchListener && this.ol.Observable.unByKey(this.sketchListener);
     },
     _registerEvents () {
       this.drawInteraction.on('drawstart', this._drawStartBasicEventListener, this);

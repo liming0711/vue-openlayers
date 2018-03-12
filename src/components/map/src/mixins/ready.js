@@ -1,4 +1,4 @@
-import { getParent } from '../utils/util';
+import { getParent } from '../utils/map';
 
 export default {
   mounted () {

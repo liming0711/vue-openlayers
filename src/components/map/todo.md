@@ -16,3 +16,4 @@
 - heatmap layer
 - draw point 有bug，无法清除 => 暂时不支持 point
 - controls: 切换地图、显示边界、显示地图网格、测算面积和距离、屏幕截图、邮票图、单点、画规则或不规则图形、切换投影
+- marker 和 text 应该可以进一步整合

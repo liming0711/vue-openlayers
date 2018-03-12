@@ -3,7 +3,7 @@ import button from '../mixins/control/button';
 
 export default {
   name: 'OlControlGraticule',
-  render () { return false; },
+  componentName: 'OlControlButton',
   mixins: [button],
   props: {
     title: {
@@ -18,6 +18,13 @@ export default {
       type: String,
       default: 'L'
     },
+    active: Boolean,
+    disable: Boolean,
+    unique: Boolean,
+    toggle: {
+      type: Boolean,
+      default: true
+    },
     maxLines: Number,
     strokeStyle: Object,
     targetSize: Number,
@@ -29,10 +36,20 @@ export default {
     lonLabelStyle: Object,
     latLabelStyle: Object
   },
+  data () {
+    return {
+      graticule: null
+    };
+  },
   methods: {
-    _handleClick () {
-      let graticule = this._getGraticule();
-      graticule.setMap(this.map);
+    _handleClickEvent () {
+      if (this.graticule && this.toggle) {
+        this.graticule.setMap(undefined);
+        this.graticule = null;
+      } else {
+        this.graticule = this._getGraticule();
+        this.graticule.setMap(this.map);
+      }
     },
     _getGraticule () {
       return new this.ol.Graticule({

@@ -1,9 +1,9 @@
 <script>
 import { createTextStyle } from '../utils/style';
 import ready from '../mixins/ready';
-import render from '../mixins/render';
-import reload from '../mixins/reload';
-import point from '../mixins/point';
+import render from '../mixins/overlay/render';
+import reload from '../mixins/overlay/reload';
+import point from '../mixins/overlay/point';
 import beforeDestroy from '../mixins/beforeDestroy';
 
 export default {

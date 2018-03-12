@@ -9,7 +9,7 @@
 import ol from 'openlayers';
 import debounce from 'throttle-debounce/debounce';
 
-import feature from './mixins/feature';
+import { getSingleFeature } from './utils/map';
 
 import broadcast from './utils/broadcast';
 import { getDataType } from './utils/util';
@@ -18,7 +18,6 @@ const DEBOUNCE_TIME = 400;
 
 export default {
   name: 'OlMap',
-  mixins: [feature],
   props: {
     center: {
       type: Array,
@@ -136,16 +135,7 @@ export default {
         controls: ol.control.defaults({
           attribution: false
         }).extend([
-          new ol.control.ScaleLine(),
-          new ol.control.FullScreen(),
-          new ol.control.MousePosition({
-            className: 'custom-mouse-position',
-            target: document.getElementById('test'),
-            coordinateFormat: (coord) => {
-              return ol.coordinate.format(ol.proj.transform(coord, 'EPSG:3857', 'EPSG:4326'), '{x} | {y}', 6);
-            },
-            undefinedHTML: '--'
-          })
+          new ol.control.ScaleLine()
         ]),
         // interactions: ol.interaction.defaults().extend([new app.Drag()]),
         interactions: ol.interaction.defaults({
@@ -207,37 +197,37 @@ export default {
     _addClickInteraction () {
       this.click = new this.ol.interaction.Select({
         style: (feature) => {
-          return this._getSingleFeature(feature).get('style');
+          return getSingleFeature(feature).get('style');
         }
       });
       this.map.addInteraction(this.click);
       this.click.on('select', (event) => {
         if (this.drawEnable) { return false; }
         if (event.selected.length) {
-          this._broadcast(this._getSingleFeature(event.selected[0]).get('vid'), 'singleclick', event);
+          this._broadcast(getSingleFeature(event.selected[0]).get('vid'), 'singleclick', event);
           this.click.getFeatures().clear(); // !important 如果不清除则无法连续点击同一个 feature
         }
       });
       // this.click.getFeatures().on('remove', (event) => {
-      //   this._broadcast(this._getSingleFeature(event.element).get('vid'), 'unclick', event);
+      //   this._broadcast(getSingleFeature(event.element).get('vid'), 'unclick', event);
       // });
     },
     _addHoverInteraction () {
       this.hover = new this.ol.interaction.Select({
         condition: this.ol.events.condition.pointerMove,
         style: (feature) => {
-          return this._getSingleFeature(feature).get('style');
+          return getSingleFeature(feature).get('style');
         }
       });
       this.map.addInteraction(this.hover);
       this.hover.on('select', (event) => {
         if (this.drawEnable) { return false; }
         if (event.selected.length) {
-          let id = this._getSingleFeature(event.selected[0]).get('vid');
+          let id = getSingleFeature(event.selected[0]).get('vid');
           id && this._broadcast(id, 'enter', event);
         }
         if (event.deselected.length) {
-          let id = this._getSingleFeature(event.deselected[0]).get('vid');
+          let id = getSingleFeature(event.deselected[0]).get('vid');
           id && this._broadcast(id, 'leave', event);
         }
       });
@@ -302,6 +292,9 @@ html, body, div, span, i, ul, li {
   border: 0;
   font-size: 100%;
   font-weight: normal;
+}
+button {
+  outline: none;
 }
 .map {
   height: 100%;

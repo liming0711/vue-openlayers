@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "axios-module": "0.0.6",
+    "create-keyframe-animation": "^0.1.0",
     "openlayers": "^4.6.4",
     "throttle-debounce": "^1.0.1",
     "vue": "^2.5.2"

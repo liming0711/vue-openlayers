@@ -2,8 +2,8 @@
 import { createVectorStyle } from '../utils/style';
 import { isEmptyObject } from '../utils/util';
 import ready from '../mixins/ready';
-import render from '../mixins/render';
-import reload from '../mixins/reload';
+import render from '../mixins/overlay/render';
+import reload from '../mixins/overlay/reload';
 import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'vector';

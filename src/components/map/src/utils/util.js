@@ -15,5 +15,3 @@ export const isEmptyObject = function (obj) {
 export const getDataType = data => {
   return class2type[toString.call(data)];
 };
-
-export const getParent = $component => ($component.$options.name !== 'OlMap') ? getParent($component.$parent) : $component;

@@ -1,6 +1,6 @@
 <script>
 import ready from '../mixins/ready';
-import reload from '../mixins/reload';
+import reload from '../mixins/overlay/reload';
 import beforeDestroy from '../mixins/beforeDestroy';
 
 const TYPE = 'image';

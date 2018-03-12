@@ -9,27 +9,40 @@
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
       <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
-      <!-- <ol-control-bar :customClass="'ol-control-bar-test'">
+      <ol-control-bar :customClass="'ol-control-bar-test'">
+        <ol-control-subbar unique :innerHtml="'S'" :customClass="'ol-control-subbar-test'">
+          <ol-control-subbar unique :innerHtml="'S1'" :customClass="'ol-control-subbar-test'">
+            <ol-control-button :innerHtml="'s1'" :clickEvent="testBarControl"></ol-control-button>
+            <ol-control-button :innerHtml="'s2'" :clickEvent="testBarControl"></ol-control-button>
+          </ol-control-subbar>
+          <ol-control-button :innerHtml="'S2'" :clickEvent="testBarControl"></ol-control-button>
+          <ol-control-button :innerHtml="'S3'" :clickEvent="testBarControl"></ol-control-button>
+        </ol-control-subbar>
         <ol-control-button
+          :innerHtml="'T0'"
           :customClass="'ol-control-button-test'"
           :clickEvent="testBarControl">
         </ol-control-button>
-        <ol-control-graticule :customClass="'ol-control-graticule'"></ol-control-graticule>
-      </ol-control-bar> -->
-      <ol-control-bar :customClass="'ol-control-bar-sub1'">
-        <ol-control-toggle :innerHtml="'1'" :active="true" :onToggle="testToggle"></ol-control-toggle>
-        <!-- <ol-control-toggle :innerHtml="'2'" :autoActive="true" :onToggle="testToggle">
-          <ol-control-bar :customClass="'ol-control-bar-sub2'">
-            <ol-control-button :clickEvent="testBarControl"></ol-control-button>
-            <ol-control-button :clickEvent="testBarControl"></ol-control-button>
-          </ol-control-bar>
-        </ol-control-toggle> -->
+        <ol-control-button
+          unique
+          :innerHtml="'T1'"
+          :customClass="'ol-control-button-test'"
+          :clickEvent="testBarControl">
+        </ol-control-button>
+        <ol-control-button
+          unique
+          :innerHtml="'T2'"
+          :customClass="'ol-control-button-test'"
+          :clickEvent="testBarControl">
+        </ol-control-button>
+        <ol-control-graticule disable active :customClass="'ol-control-graticule'"></ol-control-graticule>
+        <ol-control-button
+          :customClass="'ol-control-button-rectangle'"
+          :title="'画矩形'"
+          :innerHtml="'矩'"
+          :clickEvent="drawControl"></ol-control-button>
+        <ol-control-fullscreen></ol-control-fullscreen>
       </ol-control-bar>
-      <ol-control-button
-        :customClass="'ol-control-button-rectangle'"
-        :title="'画矩形'"
-        :innerHtml="'矩'"
-        :clickEvent="drawControl"></ol-control-button>
       <ol-marker
         :data="fire"
         :vid="'fire'"
@@ -187,7 +200,12 @@ export default {
   methods: {
     // 不要在 data 里面直接定义 function，否则作用域 this 无法传递
     drawCtrlFunc () {
-      this.drawType = 'Rectangle';
+      if (!this.drawType) {
+        this.drawType = 'Rectangle';
+      } else {
+        this.drawType = '';
+      }
+      console.log('--------- this.drawType ----------', this.drawType);
     },
     testCtrlFunc () {
       console.log('------------ test ----------');
@@ -434,6 +452,6 @@ html, body {
 } */
 .ol-control-bar-test {
   top: 0;
-  left: 40px;
+  left: 300px !important;
 }
 </style>
