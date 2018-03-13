@@ -53,6 +53,7 @@ export default {
       type: Boolean,
       default: true
     },
+    scaleLine: Boolean,
     dragPan: {
       // 鼠标或手指拖拽平移地图
       type: Boolean,
@@ -134,10 +135,7 @@ export default {
         }),
         controls: ol.control.defaults({
           attribution: false
-        }).extend([
-          new ol.control.ScaleLine()
-        ]),
-        // interactions: ol.interaction.defaults().extend([new app.Drag()]),
+        }),
         interactions: ol.interaction.defaults({
           dragPan: this.dragPan,
           keyboardZoom: this.keyboardZoom,
@@ -151,9 +149,13 @@ export default {
 
       this.ol = ol;
 
+      this._initControl();
       this._initMapEvent();
       this._initInteractions();
       this.$emit('ready');
+    },
+    _initControl () {
+      this.scaleLine && this.map.addControl(new ol.control.ScaleLine());
     },
     _initMapEvent () {
       let view = this.map.getView();

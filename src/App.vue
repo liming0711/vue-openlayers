@@ -5,6 +5,7 @@
       class="map-container"
       :zoom="zoom"
       :center="center"
+      scaleLine
       @singleclick="handleMapSingleClick"
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">

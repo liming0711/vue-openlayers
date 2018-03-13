@@ -1,6 +1,3 @@
-- control
-- 清空画板有bug，不只是清除不了 point 的 bug
-- 测距离、侧面积
 - hover、 click 或其他事件的时候需要额外的样式，各 overlays 可接受两个的样式，一个渲染的时候，一个其他事件触发
 - 各 overlays 的默认样式需要调整
 - 各组件其他配置参数支持按文档以 Object 形式传递
