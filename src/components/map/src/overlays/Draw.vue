@@ -204,6 +204,7 @@ export default {
     _drawStartBasicEventListener (e) {
       e.feature.set('vid', this.vid);
       e.feature.set('style', this._getStyle());
+      console.log('---------- this.mapComponent ---------', this.mapComponent);
       this.mapComponent.click.setActive(false);
       this.mapComponent.hover.setActive(false);
       this.$emit('drawstart', e);
@@ -322,13 +323,13 @@ export default {
       }
     },
     clearSource () {
-      this.layer.getSource().clear();
+      this.layer.getSource() && this.layer.getSource().clear();
     }
   },
   beforeDestroy () {
     this.clearSource();
     this.clearMeasureOverlay();
-    clearTimeout(this.interactionTimer);
+    this.interactionTimer && clearTimeout(this.interactionTimer);
   }
 };
 </script>

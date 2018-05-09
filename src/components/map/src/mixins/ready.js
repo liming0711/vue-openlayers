@@ -1,17 +1,12 @@
-import { getParent } from '../utils/map';
-
 export default {
+  inject: ['mapComponent'],
   mounted () {
-    const $parent = getParent(this.$parent);
-    const map = $parent.map;
-    map ? this.ready() : $parent.$on('ready', this.ready);
+    this.mapComponent.map ? this.ready() : this.mapComponent.$on('ready', this.ready);
   },
   methods: {
     ready () {
-      const $parent = getParent(this.$parent);
-      this.map = $parent.map;
-      this.ol = $parent.ol;
-      this.mapComponent = $parent;
+      this.map = this.mapComponent.map;
+      this.ol = this.mapComponent.ol;
       this._load();
     }
   }

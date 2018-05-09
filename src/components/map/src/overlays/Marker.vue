@@ -91,7 +91,7 @@ export default {
         rotation: val.rotation || 0,
         offset: this.offset,
         color: val.bgColor || this.bgColor,
-        text: val.text ? `${val.text}` : '',
+        text: val.text !== undefined ? `${val.text}` : '',
         textColor: val.textColor || this.textColor,
         offsetX: val.textOffset ? val.textOffset[0] : this.textOffset[0],
         offsetY: val.textOffset ? val.textOffset[1] : this.textOffset[1],

@@ -36,6 +36,17 @@ export default {
       type: Number,
       default: 0
     },
+    // data 没有数据时的配置参数：
+    // clean：清除该图层后直接返回
+    // keep：不清除图层保持原样直接返回
+    // hidden: 不清除图层，但是将图层的 opacity 设置为0
+    noDataMode: {
+      type: String,
+      default: 'hidden',
+      validator: function (value) {
+        return ['clean', 'keep', 'hidden'].indexOf(value) > -1;
+      }
+    },
     massClear: {
       type: Boolean,
       default: false
@@ -48,8 +59,37 @@ export default {
     };
   },
   watch: {
-    XYZ (newUrl) {
-      this.sourceObj && this.sourceObj.setUrl(newUrl);
+    XYZ (newXYZ) {
+      console.log(' ---------- XYZ --------', newXYZ);
+
+      // let existLayer = this._getLayerByParam('id', this.vid);
+      // if (!this._isValidData(newData)) {
+      //   switch (this.noDataMode) {
+      //     case 'clean':
+      //       existLayer && this.map.removeLayer(existLayer);
+      //       break;
+      //     case 'hidden':
+      //       this.opacity = 0;
+      //       break;
+      //     case 'keep':
+      //     default:
+      //       break;
+      //   }
+      //   return false;
+      // }
+
+      // if (existLayer) {
+      //   existLayer.setSource(this._getSource(this._getFeatures(newData)));
+      // } else {
+      //   this._load();
+      // }
+
+      if (!newXYZ.length) {
+        this.layer && this.layer.setOpacity(0);
+      } else {
+        this.sourceObj && this.sourceObj.setUrl(newXYZ);
+        this.layer && this.layer.setOpacity(1);
+      }
     },
     source (newSource) {
       this.layer && this.layer.setSource(newSource);
@@ -61,7 +101,7 @@ export default {
   methods: {
     _load () {
       this.sourceObj = this.source || new this.ol.source.XYZ({
-        url: this.XYZ.length ? this.XYZ : defaultXYZ
+        url: this.XYZ
       });
       this.layer = new this.ol.layer.Tile({
         id: this.vid,

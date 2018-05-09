@@ -1,9 +1,12 @@
+- tile 也需要像 overlayers 一样的 reload，watch XYZ 和 source，所以通用 reload 需要修改，因为通用 reload 只监控 data
 - hover、 click 或其他事件的时候需要额外的样式，各 overlays 可接受两个的样式，一个渲染的时候，一个其他事件触发
 - 各 overlays 的默认样式需要调整
 - 各组件其他配置参数支持按文档以 Object 形式传递
 - 台风、流场图
 - 各 feature 的 attr 属性需要删除，仅做调试用
 - line arrow
+- draw modify
+- 测距长度在拐点处显示每一段距离
 - 点击之后通过经纬度去高德查询地址
 - map 支持可配置 view ==> 多 view 切换
 - marker animation
@@ -14,3 +17,4 @@
 - draw point 有bug，无法清除 => 暂时不支持 point
 - controls: 切换地图、显示边界、显示地图网格、测算面积和距离、屏幕截图、邮票图、单点、画规则或不规则图形、切换投影
 - marker 和 text 应该可以进一步整合
+- 优化 subbar 的动画

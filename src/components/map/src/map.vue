@@ -43,12 +43,12 @@ export default {
       default: 18
     },
     layers: Array,
-    // 当 hover 到某个 feature 上的时候忽略地图的 hover 事件，Image 除外
+    // 当悬停某个 feature 的时候忽略地图的 hover 事件，Image 除外
     ignoreFeatureHover: {
       type: Boolean,
       default: true
     },
-    // 当 click 到某个 feature 上的时候忽略地图的所有 click 事件，Image 除外
+    // 当点击某个 feature 的时候忽略地图的所有 click 事件，Image 除外
     ignoreFeatureClick: {
       type: Boolean,
       default: true
@@ -100,6 +100,11 @@ export default {
       click: null,
       hover: null,
       draw: null
+    };
+  },
+  provide () {
+    return {
+      mapComponent: this
     };
   },
   mounted () {

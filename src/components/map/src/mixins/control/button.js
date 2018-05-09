@@ -8,16 +8,14 @@ export default {
     return (
       <button
         type='button'
-        class={
-          [
-            {
-              'ol-control-custom-disable': this.disable,
-              'ol-control-custom-active': !this.disable && this.isActive
-            },
-            'ol-control-custom-button',
-            this.customClass
-          ]
-        }
+        class={[
+          {
+            'ol-control-custom-disable': this.disable,
+            'ol-control-custom-active': !this.disable && this.isActive
+          },
+          'ol-control-custom-button',
+          this.customClass
+        ]}
         title={this.title}
         onClick={this._handleButtonClick}>
         { this.innerHtml }

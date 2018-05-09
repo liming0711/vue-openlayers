@@ -63,7 +63,7 @@ export default {
     _getSource (image) {
       return new this.ol.source.ImageStatic({
         url: image,
-        imageExtent: this.ol.proj.transformExtent(this.bbox, 'EPSG:4326', 'EPSG:3857')
+        imageExtent: this.ol.proj.transformExtent(this.bbox, 'EPSG:4326', 'EPSG:3857') // [minx, miny, maxx, maxy]
       });
     }
   }

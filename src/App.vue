@@ -36,7 +36,7 @@
           :customClass="'ol-control-button-test'"
           :clickEvent="testBarControl">
         </ol-control-button>
-        <ol-control-graticule disable active :customClass="'ol-control-graticule'"></ol-control-graticule>
+        <ol-control-graticule active :customClass="'ol-control-graticule'"></ol-control-graticule>
         <ol-control-button
           :customClass="'ol-control-button-rectangle'"
           :title="'画矩形'"
@@ -48,7 +48,6 @@
         :data="fire"
         :vid="'fire'"
         :bgImg="'./static/images/location.png'"
-        cluster
         @enter="handleStationHoverEnter"
         @leave="handleStationHoverLeave"
         @singleclick="handleStationSingleclick">
@@ -98,7 +97,7 @@
         @drawend="handleDrawDrawend"
         ref="draw">
       </ol-draw>
-      <ol-overlay :vid="'overlay'" :position="overlayPosition" :title="'overlay title'" :customClass="'custom-overlay'">
+      <ol-overlay :type="'popup'" :vid="'overlay'" :position="overlayPosition" :title="'overlay title'" :customClass="'custom-overlay'">
         <!-- <img :src="'./static/images/location.png'" slot="marker" style="width: 20px;" /> -->
         <!-- <div slot="marker" style="width: 20px; height: 20px; display: inline-block; background-color: #f00;"></div> -->
         <h3 class="overlay-title" style="color: #F5A623; margin: 0;">pixel: {{ overlayInfoObj.pixel || '-' }}</h3>
@@ -111,38 +110,43 @@
     <div class="lonlat">经纬度：{{ lonlat }}
       <div id="test"></div>
     </div>
-    <div class="menu menu1">
-      <button @click="getHumidity">湿度（Marker）</button>
-      <button @click="getFire">火点🔥（Marker）</button>
-      <button @click="getWind">风（Marker）</button>
-      <button @click="getStationName">站名（Text）</button>
-      <button @click="getRailway">铁路（Line）</button>
-      <button @click="getVector">等压面（Vector）</button>
-      <button @click="getRadar">雷达（Image）</button>
-      <button @click="testSetSource">测试 setSource</button>
+    <div class="menu">
+      <div class="menu-item">
+        <button @click="getHumidity">湿度（Marker）</button>
+        <button @click="getFire">火点🔥（Marker）</button>
+        <button @click="getWind">风（Marker）</button>
+        <button @click="getStationName">站名（Text）</button>
+        <button @click="getRailway">铁路（Line）</button>
+        <button @click="getVector">等压面（Vector）</button>
+        <button @click="getRadar">雷达（Image）</button>
+        <button @click="testSetSource">测试 setSource</button>
+      </div>
+      <div class="menu-item">
+        画图类型: {{this.drawType || 'NO'}}
+        <select name="drawSides" @change="setDrawType" ref="type">
+          <option>undefined</option>
+          <option value="">空字符串</option>
+          <option value="Square">Square</option>
+          <option value="Rectangle">Rectangle</option>
+          <option value="Circle">Circle</option>
+          <option value="Point">Point</option>
+          <option value="LineString">LineString</option>
+          <option value="Polygon">Polygon</option>
+          <!-- <option value="Ellipse">Ellipse</option> -->
+        </select>
+        <button @click="clearDrawSource">清空画板</button>
+      </div>
+      <div class="menu-item">
+        <button @click="switchTile">切换地图</button>
+        <button @click="switchTile('clean')">清空地图</button>
+      </div>
+      <div class="menu-item">
+        <button @click="clearMapOverlays">清除地图覆盖物</button>
+      </div>
+      <div class="menu-item">
+        <button @click="changeMeasure">toggle 测量</button>
+      </div>
     </div>
-    <div class="menu menu2">
-      画图类型: {{this.drawType || 'NO'}}
-      <select name="drawSides" @change="setDrawType" ref="type">
-        <option>undefined</option>
-        <option value="">空字符串</option>
-        <option value="Square">Square</option>
-        <option value="Rectangle">Rectangle</option>
-        <option value="Circle">Circle</option>
-        <option value="Point">Point</option>
-        <option value="LineString">LineString</option>
-        <option value="Polygon">Polygon</option>
-        <!-- <option value="Ellipse">Ellipse</option> -->
-      </select>
-      <button @click="clearDrawSource">清空画板</button>
-    </div>
-    <div class="menu menu3">
-      <button @click="switchTile">切换地图</button>
-    </div>
-    <div class="menu menu4">
-      <button @click="clearMapOverlays">清除地图覆盖物</button>
-    </div>
-    <div class="menu menu5" @click="changeMeasure">toggle 测量</div>
   </div>
 </template>
 
@@ -240,7 +244,6 @@ export default {
     },
     getFire () {
       Element.getFire().then(res => {
-        console.log('=== getFire (Marker) ===', res);
         res.forEach(val => {
           this.fire.push({
             lon: val.geometry.coordinates[0],
@@ -284,7 +287,7 @@ export default {
     getVector () {
       Element.getVector().then(res => {
         console.log('=== getVector (Vector) ===', res);
-        this.press = res.data.detail.datas;
+        this.press = res.data;
       });
     },
     getRadar () {
@@ -308,7 +311,7 @@ export default {
       console.log('======== hover leave fire in App ======>', val);
     },
     handleStationSingleclick (val) {
-      console.log('======== singleclick fire in App ======>', val);
+      console.log('======== singleclick fire in App ======>', val, val.selected[0].get('features'));
     },
     handleNameHoverEnter (val) {
       console.log('======== hover enter name in App ======>', val);
@@ -368,8 +371,12 @@ export default {
     getRandomInt (min, max) {
       return Math.floor(Math.random() * (max - min + 1) + min);
     },
-    switchTile () {
-      this.tileXYZ = XYZTileList[this.getRandomInt(0, 18)];
+    switchTile (type) {
+      if (type === 'clean') {
+        this.tileXYZ = '';
+      } else {
+        this.tileXYZ = XYZTileList[this.getRandomInt(0, 18)];
+      }
     },
     handleLineSingleclick (val) {
       console.log(' ----------- singleclick line --------->', val);
@@ -407,30 +414,15 @@ html, body {
 }
 .menu {
   position: absolute;
-  background-color: #ccc;
-  padding: 10px;
-  border-radius: 4px;
-}
-.menu1 {
   left: 20px;
   bottom: 36px;
 }
-.menu2 {
-  left: 240px;
-  bottom: 86px;
-}
-.menu3 {
-  left: 20px;
-  bottom: 86px;
-}
-.menu4 {
-  left: 110px;
-  bottom: 86px;
-}
-.menu5 {
-  left: 570px;
-  bottom: 86px;
-  background-color: #fff;
+.menu-item {
+  display: inline-block;
+  padding: 5px;
+  margin: 5px;
+  border-radius: 4px;
+  background-color: #ccc;
 }
 .lonlat {
   position: absolute;

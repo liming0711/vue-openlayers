@@ -29,7 +29,7 @@ class Element extends BaseModule {
     return this.get('static/data/lines.json');
   }
   getVector () {
-    return this.get('static/data/vector.json');
+    return this.get('static/data/polyno.json');
   }
   getRadar () {
     return this.get('static/data/radar.json');
