@@ -64,11 +64,12 @@ export default {
     // data 没有数据时的配置参数：
     // clean：清除该图层后直接返回
     // keep：不清除图层保持原样直接返回
+    // hidden: 不清除图层，但是将图层的 opacity 设置为0
     noDataMode: {
       type: String,
       default: 'clean',
       validator: function (value) {
-        return ['clean', 'keep'].indexOf(value) > -1;
+        return ['clean', 'keep', 'hidden'].indexOf(value) > -1;
       }
     },
     opacity: {

@@ -1,6 +1,8 @@
 <script>
 import ready from '../mixins/ready';
 import beforeDestroy from '../mixins/beforeDestroy';
+import { getLayerById, isValidData } from '../utils/map';
+import { getDataType } from '../utils/util';
 
 const TYPE = 'tile';
 const defaultXYZ = 'http://map.geoq.cn/ArcGIS/rest/services/ChinaOnlineStreetPurplishBlue/MapServer/tile/{z}/{y}/{x}';
@@ -60,46 +62,18 @@ export default {
   },
   watch: {
     XYZ (newXYZ) {
-      console.log(' ---------- XYZ --------', newXYZ);
-
-      // let existLayer = this._getLayerByParam('id', this.vid);
-      // if (!this._isValidData(newData)) {
-      //   switch (this.noDataMode) {
-      //     case 'clean':
-      //       existLayer && this.map.removeLayer(existLayer);
-      //       break;
-      //     case 'hidden':
-      //       this.opacity = 0;
-      //       break;
-      //     case 'keep':
-      //     default:
-      //       break;
-      //   }
-      //   return false;
-      // }
-
-      // if (existLayer) {
-      //   existLayer.setSource(this._getSource(this._getFeatures(newData)));
-      // } else {
-      //   this._load();
-      // }
-
-      if (!newXYZ.length) {
-        this.layer && this.layer.setOpacity(0);
-      } else {
-        this.sourceObj && this.sourceObj.setUrl(newXYZ);
-        this.layer && this.layer.setOpacity(1);
-      }
+      this._changeLayer(newXYZ);
     },
     source (newSource) {
-      this.layer && this.layer.setSource(newSource);
+      this._changeLayer(newSource);
     },
     opacity (newOpacity) {
-      this.layer && this.layer.setOpacity(newOpacity);
+      this.layer && this.layer.setOpacity(Math.abs(newOpacity));
     }
   },
   methods: {
     _load () {
+      if (!this.source && !this.XYZ.length) { return false; }
       this.sourceObj = this.source || new this.ol.source.XYZ({
         url: this.XYZ
       });
@@ -114,6 +88,35 @@ export default {
       });
 
       this.map.addLayer(this.layer);
+    },
+    _changeLayer (content) {
+      let existLayer = getLayerById(this.vid, this.map.getLayers().getArray());
+      if (!isValidData(content)) {
+        switch (this.noDataMode) {
+          case 'clean':
+            existLayer && this.map.removeLayer(existLayer);
+            break;
+          case 'hidden':
+            existLayer && existLayer.setOpacity(0);
+            break;
+          case 'keep':
+          default:
+            break;
+        }
+        return false;
+      }
+
+      if (existLayer) {
+        let type = getDataType(content);
+        if (type === 'String') {
+          this.sourceObj.setUrl(content);
+        } else if (type === 'Object') {
+          existLayer.setSource(content);
+        }
+        existLayer.setOpacity(this.opacity);
+      } else {
+        this._load();
+      }
     }
   }
 };

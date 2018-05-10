@@ -9,7 +9,7 @@
       @singleclick="handleMapSingleClick"
       @pointerdrag="handleMapPointerdrag"
       @pointermove="handleMapPointermove">
-      <ol-tile :vid="'base'" :XYZ="tileXYZ"></ol-tile>
+      <ol-tile :vid="'base'" :XYZ="tileXYZ" :opacity="tileOpacity"></ol-tile>
       <ol-control-bar :customClass="'ol-control-bar-test'">
         <ol-control-subbar unique :innerHtml="'S'" :customClass="'ol-control-subbar-test'">
           <ol-control-subbar unique :innerHtml="'S1'" :customClass="'ol-control-subbar-test'">
@@ -139,6 +139,7 @@
       <div class="menu-item">
         <button @click="switchTile">切换地图</button>
         <button @click="switchTile('clean')">清空地图</button>
+        <button @click="handleChangeTileOpacity">调整 opacity</button>
       </div>
       <div class="menu-item">
         <button @click="clearMapOverlays">清除地图覆盖物</button>
@@ -171,7 +172,6 @@ const XYZTileList = [
   'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_boundaryandlabel/MapServer/tile/{z}/{y}/{x}',
   'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_boundaryLine/MapServer/tile/{z}/{y}/{x}',
   'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/administrative_division_label/MapServer/tile/{z}/{y}/{x}',
-  'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/subway/MapServer/tile/{z}/{y}/{x}',
   'http://thematic.geoq.cn/arcgis/rest/services/ThematicMaps/ocean/MapServer/tile/{z}/{y}/{x}'
 ];
 
@@ -179,6 +179,7 @@ export default {
   name: 'App',
   data () {
     return {
+      tileOpacity: 1,
       zoom: 5,
       center: [116.397228, 39.909605],
       lonlat: '',
@@ -392,6 +393,9 @@ export default {
     },
     changeMeasure () {
       this.measureBoolean = !this.measureBoolean;
+    },
+    handleChangeTileOpacity () {
+      this.tileOpacity = +Math.random().toFixed(1);
     }
   }
 };

@@ -27,7 +27,7 @@ export default {
       type: String,
       default: 'clean',
       validator: function (value) {
-        return ['clean', 'keep'].indexOf(value) > -1;
+        return ['clean', 'keep', 'hidden'].indexOf(value) > -1;
       }
     },
     opacity: {
